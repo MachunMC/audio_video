@@ -1,19 +1,18 @@
-## 一、ffmpeg基础
+# 一、ffmpeg基础
 
-### 1. ffmpeg介绍
+## 1. ffmpeg介绍
 
 ffmpeg既是一款音视频编解码工具，也是一组音视频编解码开发组件。
 
-ffmpeg提供了多种媒体格式的封装和解封装，包括多种音视频编码、多种协议的流媒体、多种色彩格式转换、多种采样率转换、多种码率转换等。
-&emsp;&emsp;同时ffmpeg框架提供了多种插件模块，包含封装和解封装的插件、编码和解码的插件等。
+ffmpeg提供了多种媒体格式的封装和解封装，包括多种音视频编码、多种协议的流媒体、多种色彩格式转换、多种采样率转换、多种码率转换等。同时ffmpeg框架提供了多种插件模块，包含封装和解封装的插件、编码和解码的插件等。
 
 ffmpeg框架由5个基本模块组成。  
 
 - 封装模块：AVFormat
 - 编解码模块：AVCodec
 - 滤镜模块：AVFilter
-- 视频图像转换计算模块：swscale
-- 音频转换计算模块：swresample
+- 视频图像转换模块：swscale
+- 音频转换模块：swresample
 
 ffmpeg提供了如下3个工具。
 
@@ -21,48 +20,17 @@ ffmpeg提供了如下3个工具。
 - 播放器：ffplay
 - 多媒体分析器：ffprobe
 
-### 2. 如何安装ffmpeg
+## 2. 如何安装ffmpeg
 
-#### 2.1 ubuntu下安装ffmpeg
+下面以ubuntu为例，说明如何安装ffmpeg
 
-##### 2.1.1 apt-get方式安装ffmeg
+### 2.1 源码编译ffmpeg
 
-1. 添加源
-
-   ```
-   sudo add-apt-repository ppa:djcj/hybrid
-   ```
-
-2. 更新源
-
-   ```
-   sudo apt-get update
-   ```
-
-3. 下载ffmpeg
-
-   ```
-   sudo apt-get install ffmpeg
-   ```
-
-4. 查看ffmpeg安装路径和基本信息
-
-   ```
-   michael@ubuntu:~/ffmpeg$ whereis ffmpeg
-   ffmpeg: /usr/bin/ffmpeg /usr/share/ffmpeg /usr/share/man/man1/ffmpeg.1.gz
-   michael@ubuntu:~$ ffmpeg
-   ffmpeg version 2.8.15-0ubuntu0.16.04.1 Copyright (c) 2000-2018 the FFmpeg developers
-     *****省略多余信息*****
-   Use -h to get full help or, even better, run 'man ffmpeg'
-   ```
-
-##### 2.1.2 源码编译ffmpeg
-
-ubuntu发行版中已经包含了ffmpeg的安装包，但是可能版本比较老，对于一些新的编码格式和协议格式可能不支持，所以尽可能手动编译ffmpeg。
+**ubuntu发行版中已经包含了ffmpeg的安装包，但是可能版本比较老，对于一些新的编码格式和协议格式可能不支持，所以尽可能手动编译ffmpeg。**
 
 默认编译FFmpeg时，需要用到**yasm汇编器**对ffmpeg中的汇编部分进行编译。如果不需要用到汇编部分的代码，可以不安装yasm汇编器。如果没有安装该汇编器，执行默认配置的时候会报错。
 
-```
+```shell
 michael@ubuntu:~/ffmpeg/package$ ./configure 
 nasm/yasm not found or too old. Use --disable-x86asm for a crippled build.
 
@@ -75,7 +43,7 @@ will help solve the problem.
 
 1. 编译安装yasm
 
-```
+```shell
 wget http://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz
 ./configure 
 sudo make 
@@ -86,7 +54,7 @@ sudo make install
 
 注意：旧版本ffplay依赖于SDL 1.2，而新版本依赖于SDL 2.0，需要安装对应的SDL才能编译生成ffplay
 
-```
+```shell
 sudo apt-get install xorg-dev
 sudo apt-get install libsdl2-dev
 ```
@@ -95,28 +63,83 @@ sudo apt-get install libsdl2-dev
 
    注：--enable-shared 指定编译动态库，使用静态库编码的时候会报undefined reference的错误
 
-```
+```shell
 git clone git://source.ffmpeg.org/ffmpeg.git ffmpeg
 ./configure --enable-gpl --enable-shared --prefix=/usr/local/ffmpeg
 sudo make
 sudo make install
 ```
 
+ 	4. 安装完成后，将ffmpeg的安装路径，添加到PATH环境变量
+
+```shell
+sudo vi /etc/profile
+添加 export PATH=$PATH:/usr/local/ffmpeg/bin
+sudo source /etc/profile
+```
+
+
+
+**可能遇到的问题**
+
+1. 安装完成，执行ffmpeg，可能会遇到下面的报错
+
+   ```shell
+   /usr/local/ffmpeg/bin/ffmpeg: error while loading shared libraries: libavdevice.so.59: cannot open shared object file: No such file or directory
+   ```
+
+   解决方法：
+
+   ```shell
+   sudo vi /etc/ld.so.conf
+   在文件中添加路径：/usr/local/ffmpeg/lib   #该目录是ffmpeg的安装目录，根据个人不同安装目录修改。
+   sudo ldconfig
+   ```
+
 
 
 **ffplay与ffplay_g的区别**
 
-编译之后我们可以发现，文件夹中同时出现了ffplay与ffplay_g（还有ffmpeg与ffmpeg_g）。这个多出来的g是做什么的呢？
+编译之后会发现，文件夹中同时出现了ffplay与ffplay_g（还有ffmpeg与ffmpeg_g）。这个多出来的g是做什么的呢？
 
-实际上，ffplay_g是含有调试信息的可执行文件，当我们想要调试时（比如新建一个工程对源码进行调试）会需要到它，而一般来说在实际使用的时候，我们会使用ffplay，它是ffplay_g经过strip之后得到的文件，这就是他们的区别。
-
-#### 2.2 windows下安装ffmpeg
+实际上，ffplay_g是含有调试信息的可执行文件，当我们想要调试时（比如新建一个工程对源码进行调试）会需要到它，而一般来说在实际使用的时候，我们会使用ffplay，它是ffplay_g经过strip之后得到的文件
 
 
 
-## 二、音频基础
+### 2.1.2 apt安装ffmeg
 
-### 1. 音频处理流程
+1. 添加源
+
+   ```shell
+   sudo add-apt-repository ppa:djcj/hybrid
+   ```
+
+2. 更新源
+
+   ```shell
+   sudo apt-get update
+   ```
+
+3. 下载ffmpeg
+
+   ```shell
+   sudo apt-get install ffmpeg
+   ```
+
+4. 查看ffmpeg安装路径和基本信息
+
+   ```shell
+   michael@ubuntu:~/ffmpeg$ whereis ffmpeg
+   ffmpeg: /usr/bin/ffmpeg /usr/share/ffmpeg /usr/share/man/man1/ffmpeg.1.gz
+   michael@ubuntu:~$ ffmpeg
+   ffmpeg version 2.8.15-0ubuntu0.16.04.1 Copyright (c) 2000-2018 the FFmpeg developers
+     *****省略多余信息*****
+   Use -h to get full help or, even better, run 'man ffmpeg'
+   ```
+
+# 二、音频基础
+
+## 1. 音频处理流程
 
 采集到的音频数据是PCM数据，是转换后的数字信号
 
@@ -140,30 +163,32 @@ B --> |解码| C[PCM数据]
 C --> |播放| D[声音]
 ```
 
-### 2. 声音的产生
+## 2. 声音的产生
 
 声音是由物体振动产生的，可以通过气体、液体、固体等介质传递。
 
 声音进入耳朵，使耳膜振动，大脑对其进行识别。
 
-人的听觉范围是**20~20000Hz**，这个范围内的声音称为**可听声波**；小于20Hz的称为**次声波**，超过20000Hz的称为**超声波**。Hz是频率的单位，指1s内振动的次数。
+人的听觉范围是**20~2wHz**，这个范围内的声音称为**可听声波**；小于20Hz的称为**次声波**，超过2wHz的称为**超声波**。Hz是频率的单位，指1s内振动的次数。
 
-### 3. 声音三要素
+## 3. 声音三要素
 
 - 音量：振动的幅度
 - 音调：音频的快慢
 - 音色：由谐波产生
 
-### 4. 模数转换
+## 4. 模数转换
 
 自然界中采集到的声音是模拟信号，对声音进行量化采样，将模拟信号转换为数字信号。
 
-### 5. PCM和WAV
+## 5. PCM和WAV
 
 音频原始数据格式：
 
 - PCM：音频原始数据，纯音频数据
 - WAV：在PCM数据基础上，加了一个头部
+
+
 
 量化基本概念：
 
@@ -178,7 +203,7 @@ C --> |播放| D[声音]
 
 WAV头部：https://blog.csdn.net/zhihu008/article/details/7854529 
 
-### 6. 音频采集
+## 6. 音频采集
 
 对于音频采集，不同的平台，如android、ios、windows和mac，有不同的API可供调用。而FFmpeg对于这些平台都做了封装，不需要区分具体平台，所以掌握ffmpeg的音频采集方式很重要。
 
@@ -193,19 +218,19 @@ A[注册设备] --> B[设置采集方式]
 B --> C[打开音频设备]
  ```
 
-### 7. 音频压缩技术
+## 7. 音频压缩技术
 
 音频压缩主要考虑两方面，压缩后的数据量和压缩速度，直播需要综合考虑这两个方面
 
 音频压缩技术分为有损压缩和无损压缩。
 
-#### 7.1有损压缩
+### 7.1有损压缩
 
 低于20Hz和高于20000Hz的数据，人耳感知不到，可以去除。
 
 遮蔽效应，时间遮蔽和频域遮蔽，声音会被掩盖。
 
-#### 7.2 无损压缩
+### 7.2 无损压缩
 
 熵编码
 
@@ -213,7 +238,7 @@ B --> C[打开音频设备]
 - 算术编码
 - 香农编码
 
-#### 7.3 常见的音频编解码器
+### 7.3 常见的音频编解码器
 
 - **OPUS**：延迟小、压缩率高，是比较新的音频编解码器，webrtc中默认使用OPUS
 
@@ -240,7 +265,7 @@ AAC 格式:
 - ADIF：只能从头开始解码，不能从音频数据中间开始。适合磁盘文件
 - ADTS：每一帧音频数据，都有一个同步字，可以在音频的任何位置开始解码。类似于数据流格式
 
-### 8. 音频重采样
+## 8. 音频重采样
 
 音频三元组
 
