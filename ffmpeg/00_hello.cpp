@@ -1,19 +1,28 @@
-//#include <stdio.h>
-//
-//// ffmpeg¿âÊÇCÓïÑÔ¿â£¬ÓÃC++¹¤³Ì±àÒëÊ±£¬ĞèÒªÖ¸¶¨ÊÇC´úÂë£¬ÒÔ±ã×ö¼æÈİ£¬²»È»±àÒë»á±¨ÕÒ²»µ½·ûºÅµÄ´íÎó
-//extern "C"
-//{
-//#include "libavutil/avutil.h"
-//#include "libavutil/log.h"
-//}
-//
-//
-//int main(void)
-//{
-//	printf("hello world\n");
-//	
-//	av_log_set_level(AV_LOG_DEBUG);
-//	av_log(NULL, AV_LOG_DEBUG, "hello from av_log\n");
-//
-//	return 0;
-//}
+/*
+ * @Descripttion: ä½¿ç”¨ffmpegåº“ä¸­çš„logå‡½æ•°ï¼Œè¾“å‡ºæ‰“å°
+ * @version: 
+ * @Author: machun Michael
+ * @Date: 2021-08-09 05:02:38
+ * @LastEditors: machun Michael
+ * @LastEditTime: 2021-08-09 06:13:52
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+
+// ä¸åŠ è¿™ä¸ªå®ï¼Œç¼–è¯‘ä¼šæŠ¥é”™
+#define __STDC_CONSTANT_MACROS 
+// ffmpegæ˜¯ç”¨Cå†™çš„ï¼Œå½“C++ç¨‹åºä¸­åŒ…å«è¯¥åº“æ—¶ï¼Œéœ€è¦æ˜ç¡®æŒ‡å®šæ˜¯Cç›¸å…³çš„ç¬¦å·
+extern "C"
+{
+	#include "libavutil/avutil.h"
+	#include "libavutil/log.h"
+}
+
+int main(void)
+{
+	av_log_set_level(AV_LOG_DEBUG);
+	av_log(NULL, AV_LOG_DEBUG, "hello ffmpeg\n");
+
+	return 0;
+}
