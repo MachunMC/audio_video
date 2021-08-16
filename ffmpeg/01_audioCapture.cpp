@@ -4,7 +4,7 @@
  * @Author: machun Michael
  * @Date: 2021-08-09 06:11:59
  * @LastEditors: machun Michael
- * @LastEditTime: 2021-08-09 07:03:55
+ * @LastEditTime: 2021-08-16 05:41:54
  */
 
 #include <stdio.h>
@@ -16,6 +16,8 @@ extern "C"
     #include "libavdevice/avdevice.h"
     #include "libavformat/avformat.h"
     #include "libavutil/log.h"
+    #include "libavcodec/avcodec.h"
+    #include "libavcodec/packet.h"
 }
 
 int main()
@@ -26,10 +28,13 @@ int main()
     const AVInputFormat *ptInputFmt = NULL;
     AVFormatContext *ptFmtCtx = NULL;
     AVDictionary *ptOpt = NULL;
+    AVPacket tAvPacket;
+    char achOutPath[128] = "/home/machun/ffmpeg_learn/audioCapture.pcm";
 
     // 0. 注册音频设备
     avdevice_register_all();
 
+    // 指定用alsa库来采集音频
     ptInputFmt = av_find_input_format("alsa");
     if (NULL == ptInputFmt)
     {
@@ -50,10 +55,43 @@ int main()
         printf("avformat_open_input succ\n");
     }
 
+    //create file
+    FILE *pOutfile = fopen(ouachOutPatht, "w+");
+    
+    SwrContext* swr_ctx = init_swr();
+    
+    //4096/4=1024/2=512
+    //创建输入缓冲区
+    av_samples_alloc_array_and_samples(&src_data,         //输出缓冲区地址
+                                       &src_linesize,     //缓冲区的大小
+                                       2,                 //通道个数
+                                       512,               //单通道采样个数
+                                       AV_SAMPLE_FMT_FLT, //采样格式
+                                       0);
+    
+    //创建输出缓冲区
+    av_samples_alloc_array_and_samples(&dst_data,         //输出缓冲区地址
+                                       &dst_linesize,     //缓冲区的大小
+                                       2,                 //通道个数
+                                       512,               //单通道采样个数
+                                       AV_SAMPLE_FMT_S16, //采样格式
+                                       0);
+
+    // 2. 读取音频数据
+    av_init_packet(&tAvPacket);  // packet 初始化
+
+    // av_read_frame返回0表示成功
+    int nCount = 0;
+    while(0 == (nRet = av_read_frame(ptFmtCtx, &tAvPacket)) && nCount++ < 100)
+    {
+        printf("av_read_frame succ, [%d] size:%d\n", nCount, tAvPacket.size);
+        av_packet_unref(&tAvPacket); // packet 反初始化
+    }
+
     // 打开后需要关闭
     avformat_close_input(&ptFmtCtx);
 
-    printf("hello ffmpeg\n");
+    printf("audio capture finish!\n");
 
     return 0;
 }
