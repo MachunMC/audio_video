@@ -43,42 +43,52 @@ will help solve the problem.
 
 1. 编译安装yasm
 
-```shell
-wget http://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz
-./configure 
-sudo make 
-sudo make install
-```
+   ```shell
+   wget http://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz
+   ./configure 
+   sudo make 
+   sudo make install
+   ```
 
 2. 安装xorg-dev和SDL这两个库（缺少这两个库，无法编译出ffplay）
 
-注意：旧版本ffplay依赖于SDL 1.2，而新版本依赖于SDL 2.0，需要安装对应的SDL才能编译生成ffplay
+   注意：旧版本ffplay依赖于SDL 1.2，而新版本依赖于SDL 2.0，需要安装对应的SDL才能编译生成ffplay
 
-```shell
-sudo apt-get install xorg-dev
-sudo apt-get install libsdl2-dev
-```
+   ```shell
+   sudo apt-get install xorg-dev
+   sudo apt-get install libsdl2-dev
+   ```
 
-3. 编译安装ffmpeg（ffmpeg源码可以到官网上下载，git下载比较慢）
+3. 安装libfdk_aac、libopus、libx264（如果编译选项中，用到了--enable-libfdk-aac）
+
+   注：使用--enable-libfdk-aac编译选项时，需要先安装fdk_aac，否则会报 ERROR: libfdk_aac not found的错误，原因是fdk_aac已经从ffmpeg中独立出来了，所以需要先安装fdk_aac。同理，libopus和libx264也是一样
+   
+   ```shell
+   sudo apt install libfdk-aac-dev
+   sudo apt install libopus-dev
+   sudo apt install libx264-dev
+   ```
+
+4. 编译安装ffmpeg（ffmpeg源码可以到官网上下载，git下载比较慢）
 
    注：--enable-shared 指定编译动态库，使用静态库编码的时候会报undefined reference的错误
 
-```shell
-git clone git://source.ffmpeg.org/ffmpeg.git ffmpeg
-./configure --enable-gpl --enable-shared --prefix=/usr/local/ffmpeg
-sudo make
-sudo make install
-```
+   ```shell
+   git clone git://source.ffmpeg.org/ffmpeg.git ffmpeg
+   ./configure --enable-shared --prefix=/usr/local/ffmpeg --enable-gpl --enable-nonfree --enable-libfdk-aac
+   sudo make
+   sudo make install
+   ```
 
- 	4. 安装完成后，将ffmpeg的安装路径，添加到PATH环境变量
+5. 安装完成后，将ffmpeg的安装路径，添加到PATH环境变量
 
-```shell
-sudo vi /etc/profile
-添加 export PATH=$PATH:/usr/local/ffmpeg/bin
-sudo source /etc/profile
-```
+   ```shell
+   sudo vi /etc/profile
+   添加 export PATH=$PATH:/usr/local/ffmpeg/bin
+   sudo source /etc/profile
+   ```
 
-
+   
 
 **可能遇到的问题**
 
@@ -104,9 +114,7 @@ sudo source /etc/profile
 
 实际上，ffplay_g是含有调试信息的可执行文件，当我们想要调试时（比如新建一个工程对源码进行调试）会需要到它，而一般来说在实际使用的时候，我们会使用ffplay，它是ffplay_g经过strip之后得到的文件
 
-
-
-### 2.1.2 apt安装ffmeg
+### 2.2 apt安装ffmeg
 
 1. 添加源
 
@@ -136,6 +144,23 @@ sudo source /etc/profile
      *****省略多余信息*****
    Use -h to get full help or, even better, run 'man ffmpeg'
    ```
+
+### 2.3 卸载ffmpeg
+
+用源码的方式安装，使用如下方式卸载
+
+```shell
+cd ffmpeg
+sudo make uninstall // 删除make install安装的文件
+sudo make distclean // 删除configure和make产生的临时文件
+```
+
+用apt方式安装，使用如下方式卸载
+
+```shell
+sudo apt-get --purge remove ffmpeg
+suod apt-get --purge autoremove
+```
 
 # 二、音频基础
 
@@ -236,15 +261,15 @@ B --> C[打开音频设备]
 
 ## 7. 音频压缩技术
 
-音频压缩主要考虑两方面，压缩后的数据量和压缩速度，直播需要综合考虑这两个方面
+音频压缩主要考虑两方面，**压缩后的数据量**和**压缩速度**，直播需要综合考虑这两个方面
 
-音频压缩技术分为有损压缩和无损压缩。
+音频压缩技术分为有损压缩和无损压缩。无损压缩还原后，和原数据完全相同；有损压缩还原后，和原数据略有不同
 
 ### 7.1有损压缩
 
 低于20Hz和高于20000Hz的数据，人耳感知不到，可以去除。
 
-遮蔽效应，时间遮蔽和频域遮蔽，声音会被掩盖。
+遮蔽效应，时间遮蔽和频域遮蔽，声音会被掩盖，也可以去除。
 
 ### 7.2 无损压缩
 
@@ -254,11 +279,11 @@ B --> C[打开音频设备]
 - 算术编码
 - 香农编码
 
-### 7.3 常见的音频编解码器
+## 8. 常见的音频编码器
 
 - **OPUS**：延迟小、压缩率高，是比较新的音频编解码器，webrtc中默认使用OPUS
 
-- **AAC**：在直播中应用比较广泛，应用最广泛，音质保真性好
+- **AAC**：在直播中应用比较广泛，应用最广泛，音质保真性好。目的是取代MP3格式，压缩率更好，保真性好
 
 - Ogg：收费
 
@@ -266,22 +291,44 @@ B --> C[打开音频设备]
 
 - G.711：用于固话，窄带音频，声音损耗严重
 
-- iLBC：
-
-- AMR：
-
   评测结果：OPUS > AAC > Ogg
 
-AAC编解码器，目的是取代MP3格式，压缩率更好，保真性好
+  
+
+<img src="https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/EC04DD4BAD6F49F0968A04E807C9E127/28704" style="zoom: 67%;" />
+
+<img src="https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/C861D7E0F9BD427E9D4CC46295E12609/28706" style="zoom:67%;" />
+
+### 8.1 AAC编码器
+
+**常用的规格：**
+
+- AAC LC：最基础的版本，低复杂度，码率在128Kb/s，音质好
+- HE-AAC：在AAC LC基础上，增加了SBR技术，码率在64Kb/s左右。核心思想是按频谱分类保存，低频保存主要成分，高频单独放大编码保存音质  
+- HE-AACv2：在AAC HE V1基础上，增加了PS技术，码率在48Kb/s左右。核心思想是双声道中的声音存在某种相似性，只需存储一个声道的全部信息，然后用很少的字节保存另一个声道和它不同的地方
+
+**AAC格式**
+
+- ADIF：头部保存的音频的重要信息，只能从头开始编码，不能从音频数据的中间开始。常用在磁盘文件中
+- ADTS：每一帧都有一个同步字，可以在音频的任何位置开始解码 
 
 
 
-AAC 格式:
+从mp4文件中提取音频文件，使用AAC编码。具体参数说明，见官方文档：https://ffmpeg.org/ffmpeg-codecs.html#libfdk_005faac
 
-- ADIF：只能从头开始解码，不能从音频数据中间开始。适合磁盘文件
-- ADTS：每一帧音频数据，都有一个同步字，可以在音频的任何位置开始解码。类似于数据流格式
+```shell
+ffmpeg -i xxx.mp4 -vn -c:a libfdk_aac -ar 44100 -channels 2 -profile:a aac_he_v2 v2.aac
+// 1. -i：表示输入文件
+// 2. -vn：video no，表示过滤视频
+// 3. -c:a：-c表示code编码，a表示audio音频，表示使用fdk_aac编码器
+// 4. -ar：表示音频采样率
+// 5. -channels：表示声道数，双声道
+// 6. -profile:a：表示设置音频参数，aac_he_v2，以AAC HE V2规格来编码
+```
 
-## 8. 音频重采样
+### 8.2 opus编码器
+
+## 9. 音频重采样
 
 音频三元组
 
@@ -289,22 +336,22 @@ AAC 格式:
 - 采样大小
 - 通道数
 
-### 8.1 什么是音频重采样
+### 9.1 什么是音频重采样
 
 指的是将音频三元组的值转换成另一组值，如将44100 / 16 / 2转换成4800 / 16 / 2
 
-### 8.2 为什么要进行重采样？
+### 9.2 为什么要进行重采样？
 
 - 从设备采集的数据和编码器要求的数据不一样
 - 要播放的数据和扬声器要求的数据不一致
 - 便于计算
 
-### 8.3 如何判断是否要进行重采样
+### 9.3 如何判断是否要进行重采样
 
 - 了解音频设备的参数
 - 查看ffmpeg源码
 
-### 8.4 重采样步骤
+### 9.4 重采样步骤
 
 - 创建重采样上下文
 - 设置参数
