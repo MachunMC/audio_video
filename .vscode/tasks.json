@@ -29,6 +29,8 @@
                 "-lavformat",
                 "-lavcodec",
                 "-lavdevice",
+                "-lswresample",
+                "-lavfilter",
                 "-L'/usr/local/ffmpeg/lib'",
                 "-I'/usr/local/ffmpeg/include'"
             ],
