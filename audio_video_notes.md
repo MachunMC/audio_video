@@ -305,7 +305,7 @@ B --> C[打开音频设备]
 
 - AAC LC：最基础的版本，低复杂度，码率在128Kb/s，音质好
 - HE-AAC：在AAC LC基础上，增加了SBR技术，码率在64Kb/s左右。核心思想是按频谱分类保存，低频保存主要成分，高频单独放大编码保存音质  
-- HE-AACv2：在AAC HE V1基础上，增加了PS技术，码率在48Kb/s左右。核心思想是双声道中的声音存在某种相似性，只需存储一个声道的全部信息，然后用很少的字节保存另一个声道和它不同的地方
+- HE-AACv2：在HE-AAC基础上，增加了PS技术，码率在48Kb/s左右。核心思想是双声道中的声音存在某种相似性，只需存储一个声道的全部信息，然后用很少的字节保存另一个声道和它不同的地方
 
 **AAC格式**
 
@@ -338,17 +338,34 @@ ffmpeg -i xxx.mp4 -vn -c:a libfdk_aac -ar 44100 -channels 2 -profile:a aac_he_v2
 
 ### 9.1 什么是音频重采样
 
-指的是将音频三元组的值转换成另一组值，如将44100 / 16 / 2转换成4800 / 16 / 2
+指的是将音频三元组的值转换成另一组值，如将44100 / 16 / 2 转换成48000 / 16 / 2
 
 ### 9.2 为什么要进行重采样？
 
-- 从设备采集的数据和编码器要求的数据不一样
-- 要播放的数据和扬声器要求的数据不一致
+- 从设备采集的数据和编码器要求的数据不一致
+- 扬声器要求的音频数据和要播放的数据不一致
 - 便于计算
 
 ### 9.3 如何判断是否要进行重采样
 
 - 了解音频设备的参数
+
+```shell
+machun@ubuntu:~/ffmpeg_learn$ lspci |grep -i audio  	// 查看声卡型号
+02:02.0 Multimedia audio controller: Ensoniq ES1371/ES1373 / Creative Labs CT2518 (rev 02)
+machun@ubuntu:~/ffmpeg_learn$ cat /proc/asound/cards    // 查看声卡信息
+ 0 [AudioPCI       ]: ENS1371 - Ensoniq AudioPCI
+                      Ensoniq AudioPCI ENS1371 at 0x2040, irq 16
+machun@ubuntu:~/ffmpeg_learn$ aplay -l					// 查看声卡详细信息
+**** List of PLAYBACK Hardware Devices ****
+card 0: AudioPCI [Ensoniq AudioPCI], device 0: ES1371/1 [ES1371 DAC2/ADC]
+  Subdevices: 0/1
+  Subdevice #0: subdevice #0
+card 0: AudioPCI [Ensoniq AudioPCI], device 1: ES1371/2 [ES1371 DAC1]
+  Subdevices: 1/1
+  Subdevice #0: subdevice #0
+```
+
 - 查看ffmpeg源码
 
 ### 9.4 重采样步骤
