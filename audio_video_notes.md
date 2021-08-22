@@ -214,12 +214,11 @@ WAV文件格式如下，头部信息中，比较重要的信息都音频格式�
 
 ![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/78F4551AA2274AC7AD6468AAB2D733BC/28495)
 
-
+**音频三要素**
 
 - 采样大小（位深）：一个采样数据用多少bit存储，位深越大，表示音频范围越大。常用的是16bit
 - 采样率：常用的有8K、16K、32K、44.1K、48K，采样率越大，数字信号就越接近于模拟信号，数据量也越大
 - 声道数：单声道、双声道、多声道
-- 码率：采样率 * 采样大小 * 声道数
 
 ```
 码率 = 采样率 * 采样大小 * 声道数
@@ -374,6 +373,14 @@ card 0: AudioPCI [Ensoniq AudioPCI], device 1: ES1371/2 [ES1371 DAC1]
 - 设置参数
 - 初始化重采样
 - 进行重采样
+
+## 10. 创建音频编码器
+
+ffmpeg编码过程
+
+<img src="https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/C60EFCDE8A47453A8C6CDCE812DCDC39/28780" style="zoom:67%;" />
+
+
 
 # 三、视频基础
 
