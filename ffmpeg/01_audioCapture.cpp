@@ -4,7 +4,7 @@
  * @Author: machun Michael
  * @Date: 2021-08-09 06:11:59
  * @LastEditors: machun Michael
- * @LastEditTime: 2021-08-18 16:45:00
+ * @LastEditTime: 2021-08-20 19:45:49
  */
 
 #include <stdio.h>
@@ -17,6 +17,7 @@ extern "C"
     #include "libavdevice/avdevice.h"
     #include "libavformat/avformat.h"
     #include "libavutil/log.h"
+    #include "libavutil/channel_layout.h"
     #include "libavcodec/avcodec.h"
     #include "libavcodec/packet.h"
     #include "libswresample/swresample.h"
