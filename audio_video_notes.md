@@ -500,7 +500,7 @@ Group Of Picture，将相差比较小的一系列图片分成一组，组内桢�
 - 分解 & 复用命令（格式转换）
 - 处理原始数据命令
 - 裁剪与合并命令
-- 图片与视频互转命令
+- 图片与视频转换命令
 - 直播命令
 - 滤镜命令
 
@@ -509,9 +509,9 @@ Group Of Picture，将相差比较小的一系列图片分成一组，组内桢�
 ```mermaid
 graph TB
 
-A[输入文件] --> |demuxer 解封装| B[编码数据包]
-B --> |decoder 解码| C[解码后的数据帧]
-C --> |encoder 编码| D[编码后的数据包]
+A[输入文件] --> |demuxer 解封装| B[编码数据]
+B --> |decoder 解码| C[解码后的数据]
+C --> |encoder 编码| D[编码后的数据]
 D --> |muxer 封装| E[输出文件]
 ```
 
@@ -535,33 +535,91 @@ D --> |muxer 封装| E[输出文件]
 | -layouts     | 查看channel名称               |
 | -colors      | 查看颜色名称                  |
 
-## 4. 录制命令
+## 4. ffmpeg支持的设备
 
-ffmpeg 在 linux下支持多种采集设备，包括 **fbdev**、**v4l2**、**x11grab**
+ffmpeg 在 linux下支持多种采集设备，查看支持的设备列表
 
-查看支持的设备列表
-
+```shell
+machun@ubuntu:~/ffmpeg_learn$ ffmpeg -hide_banner -devices
+Devices:
+ D. = Demuxing supported
+ .E = Muxing supported
+ --
+ DE alsa            ALSA audio output
+ DE fbdev           Linux framebuffer
+ D  lavfi           Libavfilter virtual input device
+ DE oss             OSS (Open Sound System) playback
+  E sdl,sdl2        SDL2 output device
+ DE sndio           sndio audio playback
+ DE video4linux2,v4l2 Video4Linux2 output device
+  E xv              XV (XVideo) output device
 ```
-machun@ubuntu:~/tmp$ ffmpeg -devices
+
+- 输入设备：alsa、fbdev、lavfi、oss、sndio、v4l2
+- 输出设备：alsa、fbdev、oss、sdl、sdl2、sndio、v4l2、xv
+
+### 4.1 v4l2
+
+采集摄像头数据
+
+### 4.2 x11grab
+
+采集桌面数据
+
+### 4.3 alsa 
+
+音频采集设备，查看参数
+
+### 4.4 fbdev
+
+用于采集终端数据，设备对应的文件是 /dev/fb0
+
+```shell
+machun@ubuntu:~/ffmpeg_learn$ ffmpeg -hide_banner -h demuxer=fbdev
+Demuxer fbdev [Linux framebuffer]:
+fbdev indev AVOptions:
+  -framerate         <video_rate> .D.........  (default "25")    // 采集视频时的刷新帧率，默认25帧
+machun@ubuntu:~/ffmpeg_learn$ ffmpeg -hide_banner -h muxer=fbdev
+Muxer fbdev [Linux framebuffer]:
+    Default video codec: rawvideo.
+fbdev outdev AVOptions:
+  -xoffset           <int>        E.......... set x coordinate of top left corner (from INT_MIN to INT_MAX) (default 0)
+  -yoffset           <int>        E.......... set y coordinate of top left corner (from INT_MIN to INT_MAX) (default 0)
 ```
 
-- fbdev：用于图像展示操作
-- v4l2：采集摄像头数据
-- x11grab：录制屏幕
+有时想向外界展示linux命令行，又不希望别人看你的桌面，可以通过 FrameBuffer进行编码，然后推流或录制
 
-## 4.1 桌面
-
+```shell
+ffmpeg -framerate 30 -f fbdev -i /dev/fb0 out.wav
 ```
+
+上述命令执行后，linux会获取终端中的图像，而不是图形界面的图像
+
+## 5. 录制命令
+
+### 5.1 录制桌面
+
+```shell
 ffmpeg -f x11grab -s 1920x1080 -r 25 -i :0.0+0+0 luping.mp4
 ```
 
-## 4.2 摄像头
+- -f：指定使用哪个库
+- -i：指定从哪儿采集数据，是一个文件索引
+- -r：指定帧率
 
-## 4.3 麦克风
+### 5.2 摄像头
 
-## 4.4 摄像头 + 麦克风
+### 5.3 麦克风
 
-## 4.5 桌面 + 麦克风
+```shell
+ffmpeg -f alsa -i hw:0,0 out.wav  
+```
+
+- -f指定用到的库，alsa是采集音频的库
+
+### 5.4 摄像头 + 麦克风
+
+### 5.5 桌面 + 麦克风
 
 # 五、编解码格式
 
