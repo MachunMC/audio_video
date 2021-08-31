@@ -537,6 +537,8 @@ D --> |muxer 封装| E[输出文件]
 
 ## 4. ffmpeg支持的设备
 
+**详细资料请参考**：[FFmpeg Devices Documentation](http://www.ffmpeg.org/ffmpeg-devices.html)
+
 ffmpeg 在 linux下支持多种采集设备，查看支持的设备列表
 
 ```shell
@@ -555,20 +557,59 @@ Devices:
   E xv              XV (XVideo) output device
 ```
 
-- 输入设备：alsa、fbdev、lavfi、oss、sndio、v4l2
-- 输出设备：alsa、fbdev、oss、sdl、sdl2、sndio、v4l2、xv
+- 输入设备（demuxer）：alsa、fbdev、lavfi、oss、sndio、v4l2
+- 输出设备（muxer）：alsa、fbdev、oss、sdl、sdl2、sndio、v4l2、xv
 
 ### 4.1 v4l2
 
-采集摄像头数据
+用于采集摄像头数据，设备对应的文件是 /dev/video0
 
-### 4.2 x11grab
+### 4.2 alsa 
 
-采集桌面数据
+音频采集设备，要想使用这个设备，必须先安装libasound库。ubuntu下执行下面命令
 
-### 4.3 alsa 
+```shell
+sudo apt install libasound2-dev
+```
 
-音频采集设备，查看参数
+alsa输入设备命名规则如下，其中DEV和SUBDEV是可选的
+
+```tex
+hw:card[,DEV[,SUBDEV]]
+```
+
+查看系统支持的cards列表
+
+```shell
+machun@ubuntu:~/ffmpeg_learn$ cat /proc/asound/cards 
+ 0 [AudioPCI       ]: ENS1371 - Ensoniq AudioPCI
+                      Ensoniq AudioPCI ENS1371 at 0x2040, irq 16
+machun@ubuntu:~/ffmpeg_learn$ cat /proc/asound/devices 
+  1:        : sequencer
+  2: [ 0- 0]: digital audio playback
+  3: [ 0- 0]: digital audio capture
+  4: [ 0- 1]: digital audio playback
+  5: [ 0- 0]: raw midi
+  6: [ 0]   : control
+ 33:        : timer
+```
+
+使用如下命令可以通过 alsa 采集音频数据
+
+```shell
+ffmpeg -f alsa -i hw:0 alsaout.wav
+```
+
+常用选项
+
+```tex
+-sample_rate：设置采样率，默认48K
+-channels：设置通道数，默认双通道
+```
+
+### 4.3 x11grab
+
+用于采集桌面数据
 
 ### 4.4 fbdev
 
@@ -597,7 +638,7 @@ ffmpeg -framerate 30 -f fbdev -i /dev/fb0 out.wav
 
 ## 5. 录制命令
 
-### 5.1 录制桌面
+**录制桌面**
 
 ```shell
 ffmpeg -f x11grab -s 1920x1080 -r 25 -i :0.0+0+0 luping.mp4
@@ -607,19 +648,195 @@ ffmpeg -f x11grab -s 1920x1080 -r 25 -i :0.0+0+0 luping.mp4
 - -i：指定从哪儿采集数据，是一个文件索引
 - -r：指定帧率
 
-### 5.2 摄像头
+5.2 摄像头
 
-### 5.3 麦克风
+5.3 麦克风
 
-```shell
-ffmpeg -f alsa -i hw:0,0 out.wav  
+5.4 摄像头 + 麦克风
+
+5.5 桌面 + 麦克风
+
+## 6. 格式转换
+
+即分解与复用
+
+```mermaid
+graph LR
+
+A[输入文件] --> |demuxer 解封装| B[编码数据]
+B --> |muxer 封装| C[输出文件]
 ```
 
-- -f指定用到的库，alsa是采集音频的库
 
-### 5.4 摄像头 + 麦克风
 
-### 5.5 桌面 + 麦克风
+**用ffmpeg进行格式转换**
+
+```shell
+ffmpeg -i in.mp4 -vcodec copy -acodec copy out.flv
+```
+
+- -i：输入文件
+- -vcodec copy：视频编码处理方式，copy即复制
+- -acodec copy：音频编码处理方式，copy即复制
+
+
+
+**用ffmpeg单独提取视频**
+
+```shell
+ffmpeg -i in.mp4 -an -vcodec copy out.h264
+```
+
+- -an：不处理音频
+
+
+
+**用ffmpeg单独提取音频**
+
+```shell
+ffmpeg -i in.mp4 -vn -acodec copy out.aac
+```
+
+- -vn：不处理视频
+
+
+
+**注意：如果输入文件中没有音频，要提取音频就会报错；同理，没有视频，要提取视频也会报错**
+
+## 7. 提取原始数据
+
+视频原始数据是 YUV 数据，音频原始数据是 PCM 数据
+
+### 7.1 提取YUV数据
+
+```shell
+ffmpeg -i short_mv.mp4 -an -c:v rawvideo -pix_fmt yuv420p out.yuv
+```
+
+- -c:v rawvideo：对视频进行编码，编码格式是 rawvideo，原始数据
+- -pix_fmt：指定像素格式，yuv420p
+
+
+
+该mp4文件长度为20s，对比提取出来的YUV数据，以及mp4文件，可见文件大小差距之大。
+
+![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/B0DDF2BBB26840FE9BD57671461A8AA6/28897)
+
+
+
+播放YUV数据时，需要指定分辨率，否则播放不出来。分辨率可以在提取时的输出信息中查看
+
+![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/E063CFCD4F874E8BB664AAB3A2771467/28893)
+
+
+
+### 7.2 提取PCM数据
+
+```shell
+ffmpeg -i short_mv.mp4 -vn -ar 44100 -ac 2 -f s16le out.pcm
+```
+
+- -ar：audio rate，音频采样率
+- -ac：audio channel，指定声道数
+- -f：音频数据存储格式，s16le（s表示有符号，16表示16位，le表示little endian，小端存储）
+
+![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/094C1DCDD8D241F3BB8FE10B90BC4628/28899)
+
+
+
+播放原始数据，也需要指定采样率、声道数、存储格式信息，才能正确播放
+
+![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/8037AADD3C7140628A6658407438C764/28895)
+
+
+
+## 8. 裁剪与拼接
+
+### 8.1 音视频裁剪
+
+```shell
+ffmpeg -i input.mp4 -ss 00:01:20 -t 20 out.mp4
+```
+
+- -ss：指定从视频的什么位置开始裁剪，1分20秒开始
+- -t：裁剪的时间，单位s
+
+### 8.2 音视频拼接
+
+```shell
+ffmpeg -f concat -i inputs.txt out.mp4
+```
+
+- -f concat：表示要拼接视频
+
+- inputs.txt 为要拼接的文件列表，文件名的先后顺序指定视频的先后顺序。文件内容为 file 'filename' 格式
+
+
+
+将1.mp4和2.mp4合并，合成后的文件，1.mp4在前，2.mp4在后
+
+```shell
+machun@ubuntu:~/ffmpeg_learn$ cat inputs.txt 
+file '1.mp4'
+file '2.mp4'
+machun@ubuntu:~/ffmpeg_learn$ ffmpeg -f concat -i inputs.txt 3.mp4
+```
+
+## 9. 图片和视频互转
+
+### 9.1 视频转图片
+
+```shell
+ffmpeg -i input.flv -r 1 -f image2 image-%3d.jpeg
+```
+
+- -r：表示转换图片的帧率，每秒转换出1张图片
+
+- -f：指定转换后的图片格式，image2
+
+- image-%3d.jpeg：转换后的文件名，%3d是格式化输出
+
+  
+
+**转换后的结果如下**
+
+<img src="https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/B9431A99415A4CF0A8F688307DEEAFFB/28901" style="zoom:80%;" />
+
+### 9.2 图片转视频
+
+```shell
+ffmpeg -i image-%3d.jpeg out.mp4
+```
+
+如果按照上面的方式转，是默认按照25帧每秒来转换。
+
+设置图片按照固定的帧率转换为视频
+
+```shell
+ffmpeg -i image-%3d.jpeg  -r 10 out.mp4
+```
+
+设置图片切换帧率为每秒1张图片。注意 -r 1的顺序，放到后面转换后的视频时长不对
+
+```shell
+ffmpeg -r 1 -i image-%02d.jpeg -vf fps=1 out.mp4
+```
+
+图片转视频，还可以设置分辨率信息
+
+## 10. 直播推拉流
+
+
+
+
+
+
+
+
+
+
+
+
 
 # 五、编解码格式
 
