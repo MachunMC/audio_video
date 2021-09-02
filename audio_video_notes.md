@@ -75,7 +75,7 @@ will help solve the problem.
 
    ```shell
    git clone git://source.ffmpeg.org/ffmpeg.git ffmpeg
-   ./configure --enable-shared --prefix=/usr/local/ffmpeg --enable-gpl --enable-nonfree --enable-libfdk-aac
+   ./configure --enable-shared --prefix=/usr/local/ffmpeg --enable-gpl --enable-nonfree --enable-libfdk-aac --enable-libx264
    sudo make
    sudo make install
    ```
@@ -235,7 +235,7 @@ WAV文件格式如下，头部信息中，比较重要的信息都音频格式�
 ### 6.1 命令行方式
 
 ```shell
-ffmpeg -f alsa -i hw:0,0 out.wav  // 用ffmpeg采集音频数据。-f指定用到的库，alsa是采集音频的库
+ffmpeg -f alsa -i hw:0 out.wav  // 用ffmpeg采集音频数据。-f指定用到的库，alsa是采集音频的库
 ffplay out.wav					  // ffplay播放保存的音频文件
 ```
 
@@ -498,8 +498,8 @@ Group Of Picture，将相差比较小的一系列图片分成一组，组内桢�
 - 基本信息查询命令
 - 录制命令
 - 分解 & 复用命令（格式转换）
-- 处理原始数据命令
-- 裁剪与合并命令
+- 提取原始数据命令
+- 裁剪与拼接命令
 - 图片与视频转换命令
 - 直播命令
 - 滤镜命令
@@ -607,6 +607,12 @@ ffmpeg -f alsa -i hw:0 alsaout.wav
 -channels：设置通道数，默认双通道
 ```
 
+示例：注意 -channels 和 -sample_rate 选项要放到-i hw:0 前面，否则参数设置不生效
+
+```shell
+ffmpeg -f alsa -channels 1 -sample_rate 44100 -i hw:0 alsaout2.wav
+```
+
 ### 4.3 x11grab
 
 用于采集桌面数据
@@ -699,9 +705,10 @@ ffmpeg -i in.mp4 -vn -acodec copy out.aac
 
 - -vn：不处理视频
 
+**注意：**
 
-
-**注意：如果输入文件中没有音频，要提取音频就会报错；同理，没有视频，要提取视频也会报错**
+- 如果输入文件中没有音频，要提取音频就会报错；同理，没有视频，要提取视频也会报错
+- 注意提取的视频文件后缀名，要和ffprobe查看的视频格式相同，否则播放有问题
 
 ## 7. 提取原始数据
 
@@ -716,19 +723,13 @@ ffmpeg -i short_mv.mp4 -an -c:v rawvideo -pix_fmt yuv420p out.yuv
 - -c:v rawvideo：对视频进行编码，编码格式是 rawvideo，原始数据
 - -pix_fmt：指定像素格式，yuv420p
 
-
-
 该mp4文件长度为20s，对比提取出来的YUV数据，以及mp4文件，可见文件大小差距之大。
 
 ![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/B0DDF2BBB26840FE9BD57671461A8AA6/28897)
 
-
-
-播放YUV数据时，需要指定分辨率，否则播放不出来。分辨率可以在提取时的输出信息中查看
+UV数据时，需要指定分辨率，否则播放不出来。分辨率可以在提取时的输出信息中查看
 
 ![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/E063CFCD4F874E8BB664AAB3A2771467/28893)
-
-
 
 ### 7.2 提取PCM数据
 
@@ -742,13 +743,9 @@ ffmpeg -i short_mv.mp4 -vn -ar 44100 -ac 2 -f s16le out.pcm
 
 ![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/094C1DCDD8D241F3BB8FE10B90BC4628/28899)
 
-
-
 播放原始数据，也需要指定采样率、声道数、存储格式信息，才能正确播放
 
 ![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/8037AADD3C7140628A6658407438C764/28895)
-
-
 
 ## 8. 裁剪与拼接
 
@@ -761,6 +758,8 @@ ffmpeg -i input.mp4 -ss 00:01:20 -t 20 out.mp4
 - -ss：指定从视频的什么位置开始裁剪，1分20秒开始
 - -t：裁剪的时间，单位s
 
+**需要注意裁剪的开始时间，是否在视频的有效时间内**
+
 ### 8.2 音视频拼接
 
 ```shell
@@ -768,10 +767,7 @@ ffmpeg -f concat -i inputs.txt out.mp4
 ```
 
 - -f concat：表示要拼接视频
-
 - inputs.txt 为要拼接的文件列表，文件名的先后顺序指定视频的先后顺序。文件内容为 file 'filename' 格式
-
-
 
 将1.mp4和2.mp4合并，合成后的文件，1.mp4在前，2.mp4在后
 
@@ -824,13 +820,103 @@ ffmpeg -r 1 -i image-%02d.jpeg -vf fps=1 out.mp4
 
 图片转视频，还可以设置分辨率信息
 
-## 10. 直播推拉流
+## 10. 推拉流
 
+### 10.1 Ubuntu Nginx搭建RTMP服务器
 
+参考链接：[Nginx搭建rtmp流媒体服务器(Ubuntu 16.04) - 简书 (jianshu.com)](https://www.jianshu.com/p/16741e363a77)
 
+- 安装mercurial支持hg命令、openssl、pcre、zlib
 
+```shell
+sudo apt install mercurial
+sudo apt-get install openssl libssl-dev
+sudo apt-get install libpcre3 libpcre3-dev
+sudo apt-get install zlib1g-dev  
+```
 
+- 下载Nginx 和 nginx-rtmp-module，并编译Nginx，默认安装到 **/usr/local/nginx**，配置文件路径**/usr/local/nginx/conf/nginx.conf**
 
+```shell
+hg clone http://hg.nginx.org/nginx
+git clone https://github.com/arut/nginx-rtmp-module.git
+
+cd nginx
+auto/configure --with-http_ssl_module --with-http_v2_module --with-http_flv_module --with-http_mp4_module --add-module=../nginx-rtmp-module
+sudo make -j4 
+sudo make install
+```
+
+- 配置Nginx，在/usr/local/nginx/conf/nginx.conf中，新增下面的配置
+
+```tex
+rtmp {  #RTMP server
+    server {
+        listen 1935;  #server port
+        chunk_size 4096;  #chunk_size
+
+        #vod server 点播
+        application vod {
+            play /mnt/hgfs/vmshare/vod; #media file position
+        }
+
+        #live server 1 直播
+        application live_1{
+                live on;
+        }
+
+        #live server 2 直播
+        application live_2{
+                live on;
+        }
+    }
+}
+```
+
+- 启动Nginx
+
+```
+sudo /usr/local/nginx/sbin/nginx 			// 启动nginx
+sudo /usr/local/nginx/sbin/nginx -s reload  // 修改配置后，重新启动nginx
+```
+
+- 点播
+
+```
+// 1. 新建文件夹，存放视频文件
+mkdir /mnt/hgfs/vmshare/vod
+
+// 2. 将视频文件放到该目录下，文件需要符合 AAC + H264
+
+// 3. 播放
+ffplay rtmp://localhost/vod/wanfengqingqishi.mp4  // 注意这里要加vod，对应配置中application的名称
+```
+
+- 直播，ffmpeg往RTMP服务器推流，然后可以用ffplay直接播放
+
+### 10.2 推流
+
+```shell
+ffmpeg -re -i out.mp4 -c copy -f flv rtmp://server/live/streamName
+```
+
+- -re：减慢帧率速度
+- -c：音视频编解码，如果只推视频加-vcodec，只推音频-acodec
+- -f：指定推流的格式
+
+### 10.3 拉流
+
+```shell
+ffmpeg -i rtmp://server/live/streamName -c copy dump.flv
+```
+
+- -c copy：表示不重新编码，直接复制
+
+可以直接用ffplay播放
+
+```
+ffplay rtmp://172.16.199.156/live_1/wanfeng
+```
 
 
 
