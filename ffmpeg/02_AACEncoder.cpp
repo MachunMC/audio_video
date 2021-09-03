@@ -4,7 +4,7 @@
  * @Author: machun Michael
  * @Date: 2021-08-18 16:45:34
  * @LastEditors: machun Michael
- * @LastEditTime: 2021-08-21 01:58:10
+ * @LastEditTime: 2021-08-25 16:44:25
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -330,7 +330,6 @@ int main()
 
     // 关闭设备
     CloseAudioDev(&ptFormatCtx);
-
 
     av_log(NULL, AV_LOG_DEBUG, "hello ffmpeg\n");
     
