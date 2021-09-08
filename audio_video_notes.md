@@ -32,7 +32,6 @@ ffmpeg提供了如下3个工具。
 ## 2. 如何安装ffmpeg
 
 > 下面以ubuntu为例，说明如何安装ffmpeg
->
 
 ### 2.1 源码编译ffmpeg
 
@@ -1100,15 +1099,15 @@ ffmpeg -i in.mov -vf crop=in_w -200:in_h-200 -c:v libx264 -c:a copy out.mp4
 
 ## 1. ffmpeg代码结构
 
-| 目录          | 功能                             |
-| ------------- | -------------------------------- |
-| libavcodec    | 编解码器相关的实现               |
-| libavformat   | 实现流协议、容器格式、基本IO访问 |
-| liavutil      | hash、解码器、各种工具函数       |
-| libavfilter   | 音视频滤镜                       |
-| libavdevice   | 设备相关                         |
-| libswresample | 混音、重采样                     |
-| libswscale    | 色彩转换、缩放                   |
+| 目录          | 功能                         |
+| ------------- | ---------------------------- |
+| libavcodec    | 编解码器相关                 |
+| libavformat   | 流协议、容器格式、基本IO操作 |
+| liavutil      | hash、解码器、各种工具函数   |
+| libavfilter   | 音视频滤镜                   |
+| libavdevice   | 设备相关                     |
+| libswresample | 混音、重采样                 |
+| libswscale    | 色彩转换、缩放               |
 
 ## 2. 日志
 
@@ -1130,5 +1129,42 @@ av_log_set_level(AV_LOG_DEBUG);
 av_log(NULL, AV_LOG_ERROR, char *fmt, ...);
 ```
 
-## 3. 文件操作
+## 3. 多媒体文件的基本概念
+
+- 多媒体文件是一个容器，例如mp4文件，其中包含视频数据、音频数据、字幕数据等
+- 每个容器中都有很多流（stream），例如视频流、音频流、字幕流，每条流的数据没有交叉
+- 每条流是由不同的编码器编码的
+- 从流中读出的数据称为包，包中的数据都是压缩后的数据
+- 每包数据由一帧或多帧组成
+- 一帧或多桢数据组成一个包，一包或多包组成一条流，一条或多条流组成一个多媒体文件
+
+```mermaid
+graph LR
+
+A[桢] --> |组成| B[包] --> |组成| C[流] --> |组成| D[多媒体文件]
+```
+
+
+
+## 4. 几个重要的结构体
+
+- AVFormatContext：格式上下文，连接多个API之间的桥梁
+- AVStream：流相关
+- AVPacket：包相关
+
+## 5. ffmpeg操作流数据的基本步骤
+
+```mermaid
+graph LR
+
+A[多媒体文件 ] --> B[解复用] --> C[获取流] --> D[读取数据包] --> E[其他操作] --> F[释放资源]
+```
+
+
+
+
+
+
+
+
 
