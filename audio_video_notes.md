@@ -1177,8 +1177,6 @@ A[多媒体文件 ] --> B[解复用] --> C[获取流] --> D[读取数据包] -->
 - av_read_frame：获取数据包（需要和av_packet_unref配合使用，否则会有内存泄露）
 - av_packet_unref：释放引用计数，防止内存泄露
 
-
-
 从多媒体文件中抽取出来的aac文件，不能直接播放，因为每一帧数据都缺少了ADTS头信息。只要加入ADTS头即可。AAC原始数据长度是可变的，在原始帧的基础上，加上ADTS头进行封装，就形成了ADTS帧。
 
 AAC音频文件的每一帧，由ADTS头和AAC音频数据组成。
@@ -1186,4 +1184,10 @@ AAC音频文件的每一帧，由ADTS头和AAC音频数据组成。
 ADTS头包含音频的采样率，声道数，帧长度等信息，ADTS头长度一般为7字节
 
 具体可以参考：[AAC的ADTS头文件信息介绍_依然范特西-CSDN博客_adts头](https://blog.csdn.net/jay100500/article/details/52955232)
+
+## 8. 抽取视频数据
+
+- Start code：特征码，用于区分视频帧
+- SPS / PPS：解码的视频参数，分辨率等信息
+- codec->extradata：获取SPS / PPS数据
 
