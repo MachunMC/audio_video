@@ -2,8 +2,20 @@
 - [ ] FFmpeg滤镜命令
 - [ ] RGB格式
 - [ ] 视频编码格式
-- [ ] 视频封装格式
-- [ ] 流媒体协议（RTMP）
+  - [ ] **H264**
+  - [ ] MPEG
+- [ ] 封装格式
+  - [x] mp4
+  - [ ] flv
+  - [ ] TS
+- [ ] 音频编码格式
+  - [ ] AAC
+  - [ ] OPUS
+- [ ] 流媒体协议
+  - [ ] RTMP
+  - [ ] RTSP
+  - [ ] RTP
+  - [ ] RTCP
 
 
 
@@ -617,7 +629,10 @@ H264 码流压缩率大约为250倍，H265 码流压缩率大约为500倍
 
 ## 6. H264
 
-### 6.1 压缩比
+参考链接：
+
+- [(6条消息) 入门理解H264编码_go_str的博客-CSDN博客_h264编码](https://blog.csdn.net/go_str/article/details/80340564#comments_18250010)
+- [(6条消息) H264 编码简介_slamer的专栏-CSDN博客_h264dr编码](https://blog.csdn.net/mydear_11000/article/details/49990637)
 
 ### 6.2 GOP
 
@@ -658,25 +673,89 @@ Group Of Picture，将相差比较小的一系列图片分成一组，组内桢�
 
 ## 2. mp4
 
-[5分钟入门MP4文件格式 - 程序猿小卡 - 博客园 (cnblogs.com)](https://www.cnblogs.com/chyingp/p/mp4-file-format.html)
+### 2.1 简介
 
-[你真的懂 MP4 格式吗？MP4文件格式重点全解析！ - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/355803589)
+mp4文件格式，又叫做MPEG-4 Part 14，出自MPEG-4标准的第14部分。mp4文件格式基于Apple公司的QuickTime格式。
 
-[MP4结构概述和分析工具(上篇) - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/148854913)
+mp4文件由多个box组成，每个box存储不同的信息，box之间呈树状结构。主要由ftyp、moov、mdat三个box组成，free box内容为空。
+
+每个 box 由 header 和 data 组成，其中 header 包含了 box 的类型和大小，data 包含具体数据或嵌套的子 box
+
+mp4格式分析工具，mp4info。下图为该工具展示的box信息
+
+![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/F1C740597FE345CB9D0B15B263243525/29128)
+
+一个典型的mp4文件基本结构如下图所示（可能有部分名称不对，以mp4info显示的数据为准）
+
+<img src="https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/FC97BA97B63545829670B35853933565/29125" style="zoom:150%;" />
+
+### 2.2 ftyp
+
+File Type Box，一般位于文件的开始位置，用于描述文件的版本、协议信息等
+
+![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/D4BB28AAE2F646FAAC36877B9358814E/29130)
+
+### 2.3 moov
+
+Movie Box，包含文件的整体信息，以及所有轨道（音频轨、视频轨）的相关信息
+
+#### 2.3.1 mvhd
+
+Movie Header Box，记录文件的整体信息，如创建时间、修改时间、总时长等
+
+![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/7C489023538A403CA2FD9E8F26A556B0/29132)
+
+#### 2.3.2 trak
+
+Track Box，记录媒体流的相关信息
+
+##### 2.3.2.1 tkhd
+
+Track Header Box，关于媒体流的头部信息，头部大小、类型、版本、创建时间、修改时间、track ID、视频流分辨率等，下图显示的分辨率为1280 * 720
+
+![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/135C02CBAE784E1CA2E54B85CBF5BA24/29134)
+
+##### 2.3.2.2 edts
+
+##### 2.3.2.3 mdia
+
+Media Box，包含track媒体信息的container box。子box包括
+
+- mdhd：Media Header Box，存放视频流创建时间，长度等信息
+- hdlr：Handler Reference Box，媒体的播放过程信息
+- minf：Media Information Box，解释track媒体数据的handler-specific 信息
+  - smhd
+  - dinf
+    - dref
+      - url
+  - **stbl**：Sample Table Box，最重要的部分，包含了媒体流每个sample再文件中的offset，pts，duration信息。要想播放一个mp4文件，必须根据stbl找到每个sample，并送给解码器
+    - stsd：Sample Description Box，存放解码相关的描述信息
+      - mp4a
+        - esds
+    - stts：Time To Sample Box，定义每个Sample的时长
+    - stsc：Sample To Chunk Box，Sample Chunk映射表
+    - stsz：Sample Size Box，指定每个Sample的size
+    - stco：Chunk Offset Box，指定每个Chunk在文件中的位置
 
 
 
+**相关概念**
 
+- Sample：是一个媒体流的基本单元，例如视频流的一个sample代表实际的nal数据
+- Chunk：是数据存储的基本单元，是一系列Sample数据的集合，一个chunk可以包含一个或多个sample
 
+#### 2.3.3 udta
 
+User Data Box，自定义数据
 
+### 2.4 mdat
 
+Media Data Box，存放具体的多媒体数据
 
+### 2.5 参考链接
 
-
-
-
-
+- [你真的懂 MP4 格式吗？MP4文件格式重点全解析！ - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/355803589)
+- [5分钟入门MP4文件格式 - 程序猿小卡 - 博客园 (cnblogs.com)](https://www.cnblogs.com/chyingp/p/mp4-file-format.html)
 
 # 五、ffmpeg命令
 
