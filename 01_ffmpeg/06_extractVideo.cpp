@@ -4,7 +4,7 @@
  * @Author: machun Michael
  * @Date: 2021-09-10 16:39:40
  * @LastEditors: machun Michael
- * @LastEditTime: 2021-09-10 17:02:26
+ * @LastEditTime: 2021-09-14 16:49:54
  */
 
 #include <stdio.h>
@@ -88,9 +88,10 @@ int main(int argc, char *argv[])
         // 读取数据
         while(0 == av_read_frame(ptFmtCtx, &tAvPkt))
         {
+            // 这里对每一帧数据需要特殊处理，添加h264帧的相关信息
             if (tAvPkt.stream_index == nVidIndex)
             {
-                fwrite(tAvPkt.data, 1, tAvPkt.size, pFp);
+                // fwrite(tAvPkt.data, 1, tAvPkt.size, pFp);
             }
 
             av_packet_unref(&tAvPkt);
