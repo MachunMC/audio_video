@@ -94,6 +94,8 @@ will help solve the problem.
 
    注：--enable-shared 指定编译动态库，使用静态库编码的时候会报undefined reference的错误
 
+   ffmpeg常用配置：[ffmpeg configure配置选项_一个人像一支队伍-CSDN博客](https://blog.csdn.net/momo0853/article/details/78043903)
+
    ```shell
    git clone git://source.ffmpeg.org/ffmpeg.git ffmpeg
    ./configure --enable-shared --prefix=/usr/local/ffmpeg --enable-gpl --enable-nonfree --enable-libfdk-aac --enable-libx264
@@ -109,7 +111,8 @@ will help solve the problem.
    sudo source /etc/profile
    ```
 
-   
+
+
 
 **可能遇到的问题**
 
@@ -631,12 +634,6 @@ H264 码流压缩率大约为250倍，H265 码流压缩率大约为500倍
 
 ### 6.1 视频编码简介
 
-**参考链接：**
-
-- [入门理解H264编码_go_str的博客-CSDN博客_h264编码](https://blog.csdn.net/go_str/article/details/80340564#comments_18250010)
-- [ H264 编码简介_slamer的专栏-CSDN博客_h264dr编码](https://blog.csdn.net/mydear_11000/article/details/49990637)
-- [程序员研修院-CSDN](https://edu.csdn.net/learn/2777?spm=1002.2001.3001.4140)
-
 视频编码，可以简单的理解为对视频内容进行压缩。
 
 
@@ -689,10 +686,12 @@ H264 码流压缩率大约为250倍，H265 码流压缩率大约为500倍
 
 **帧、片、宏块**
 
-- 一个编码后的图像叫做一**帧**
+- 一个编码后的图像叫做一**帧**图像
 - 一帧由一**片**（slice）或多片组成
 - 一片由一个或多个**宏块**（MicroBlock）组成，宏块是H264编码的基本单元
-- 一个宏块由16*16的yuv像素点组成
+- 一个宏块由16*16的yuv像素点组成，每个宏块还可以划分为多个子块
+
+<img src="https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/575AAFEB73B14A3CAFB382B255BE92E5/29182"  />
 
 
 
@@ -705,35 +704,33 @@ H264 码流压缩率大约为250倍，H265 码流压缩率大约为500倍
 
 
 
-**GOP**，Group Of Pictures，是一组连续的画面，由一个I帧和多个P、B帧组成，是编解码的基本单位。
+**GOP**，Group Of Pictures，是一组连续的画面，由一个I帧和多个P、B帧组成，是编解码的基本单位。可以理解为关键帧间隔
 
 
 
 **SPS、PPS**
 
-
-
-**码流结构**
-
-[(6条消息) 音视频开发-H264数据组成_CaicaiNo.1-CSDN博客](https://blog.csdn.net/shengpeng3344/article/details/104957016#:~:text=H264. H264结构中，一个视频图像编码后的数据叫做一 帧 ，一帧由一个 片（slice） 或多个片组成，一个 片 由一个或多个,SODB（数据比特串） 最原始的编码数据，即VCL数据；. RBSP（原始字节序列载荷） 在 SODB 的后面填加了结尾比特（RBSP trailing bits　一个bit"1"）若干比特"0"%2C以便字节对齐；.)
-
-[(6条消息) H264系列--码流组成和分层结构_yizhongliu的专栏-CSDN博客](https://blog.csdn.net/yizhongliu/article/details/114640635)
-
-[(6条消息) 入门理解H264编码_go_str的博客-CSDN博客_h264编码](https://blog.csdn.net/go_str/article/details/80340564)
-
-[(6条消息) H.264/AVC视频编解码技术_BigDream123的博客-CSDN博客_avc视频编码](https://blog.csdn.net/BigDream123/article/details/108149354)
+解码相关的参数信息
 
 
 
+### 6.3 H264编码格式
+
+参考链接：
+
+[视频和视频帧：H264编码格式整理 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/71928833)
+
+[H264系列--码流组成和分层结构_yizhongliu的专栏-CSDN博客](https://blog.csdn.net/yizhongliu/article/details/114640635)
 
 
-### H264 码流封装格式
+
+**H264码流封装格式**
 
 **字节流格式**
 
 - 大部分编码器的默认输出格式
 - 每个NAL Unit以规定格式的起始码分割
-- 起始码：0x 00 00 00 01或 0x 00 00 01
+- 起始码（start code）：0x 00 00 00 01或 0x 00 00 01
 
 
 
@@ -771,29 +768,23 @@ mp4文件由多个box组成，每个box存储不同的信息，box之间呈树�
 
 每个 box 由 header 和 data 组成，其中 header 包含了 box 的类型和大小，data 包含具体数据或嵌套的子 box
 
-mp4格式分析工具，mp4info。下图为该工具展示的box信息
-
-![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/F1C740597FE345CB9D0B15B263243525/29128)
-
-一个典型的mp4文件基本结构如下图所示（可能有部分名称不对，以mp4info显示的数据为准）
-
-<img src="https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/FC97BA97B63545829670B35853933565/29125" style="zoom:150%;" />
+mp4格式分析工具有mp4info，mp4 explore，ffmpeg，Elecard StreamEye等。
 
 ### 2.2 ftyp
 
 File Type Box，一般位于文件的开始位置，用于描述文件的版本、协议信息等
 
-![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/D4BB28AAE2F646FAAC36877B9358814E/29130)
+![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/0EBA57E32C03495C86FF640EFB2F10B1/29194)
 
 ### 2.3 moov
 
-Movie Box，包含文件的整体信息，以及所有轨道（音频轨、视频轨）的相关信息
+Movie Box，包含文件的整体信息（创建时间、修改时间、总时长等），以及所有轨道（音频轨、视频轨）的相关信息
 
 #### 2.3.1 mvhd
 
 Movie Header Box，记录文件的整体信息，如创建时间、修改时间、总时长等
 
-![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/7C489023538A403CA2FD9E8F26A556B0/29132)
+![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/71A6D49BB88947C68EA56F6344BBF7BD/29198)
 
 #### 2.3.2 trak
 
@@ -801,11 +792,13 @@ Track Box，记录媒体流的相关信息
 
 ##### 2.3.2.1 tkhd
 
-Track Header Box，关于媒体流的头部信息，头部大小、类型、版本、创建时间、修改时间、track ID、视频流分辨率等，下图显示的分辨率为1280 * 720
+Track Header Box，关于媒体流的头部信息，Flag、创建时间、修改时间、track ID、视频流分辨率等
 
-![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/135C02CBAE784E1CA2E54B85CBF5BA24/29134)
+![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/A37029189DAA4290ADB43411A27B42BC/29200)
 
 ##### 2.3.2.2 edts
+
+![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/6BB78A91D6C948CDA5BC1643116FFC09/29202)
 
 ##### 2.3.2.3 mdia
 
@@ -814,15 +807,13 @@ Media Box，包含track媒体信息的container box。子box包括
 - mdhd：Media Header Box，存放视频流创建时间，长度等信息
 - hdlr：Handler Reference Box，媒体的播放过程信息
 - minf：Media Information Box，解释track媒体数据的handler-specific 信息
-  - smhd
+  - vmhd：Video Media Header Box
   - dinf
-    - dref
-      - url
-  - **stbl**：Sample Table Box，最重要的部分，包含了媒体流每个sample再文件中的offset，pts，duration信息。要想播放一个mp4文件，必须根据stbl找到每个sample，并送给解码器
+  - **stbl**：Sample Table Box，**最重要的部分**，包含了媒体流每个sample在文件中的offset，pts，duration信息。要想播放一个mp4文件，必须根据stbl找到每个sample，并送给解码器
     - stsd：Sample Description Box，存放解码相关的描述信息
-      - mp4a
-        - esds
-    - stts：Time To Sample Box，定义每个Sample的时长
+    - stts：Decoding Time To Sample Box，定义每个Sample的时长
+    - stss：Sync Sample Box
+    - ctts：Composition Time To Sample Box
     - stsc：Sample To Chunk Box，Sample Chunk映射表
     - stsz：Sample Size Box，指定每个Sample的size
     - stco：Chunk Offset Box，指定每个Chunk在文件中的位置
