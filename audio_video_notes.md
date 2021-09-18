@@ -2,11 +2,11 @@
 - [ ] FFmpeg滤镜命令
 - [ ] RGB格式
 - [ ] 视频编码格式
-  - [ ] **H264**
+  - [x] H264
   - [ ] MPEG
 - [ ] 封装格式
-  - [x] mp4
-  - [ ] flv
+  - [x] MP4
+  - [x] FLV
   - [ ] TS
 - [ ] 音频编码格式
   - [ ] AAC
@@ -751,14 +751,14 @@ H264 码流压缩率大约为250倍，H265 码流压缩率大约为500倍
 
 | 名称 | 推出机构      | 是否支持流媒体 | 支持的视频编码格式           | 支持的音频编码格式                    | 使用领域       |
 | ---- | ------------- | -------------- | ---------------------------- | ------------------------------------- | -------------- |
-| AVI  | Microsoft     | 不支持         | 几乎所有格式                 | 几乎所有格式                          | BT下载影视     |
 | MP4  | MPEG          | 支持           | MPEG-2，MPEG-4, H263, H264等 | AAC，MPEG-1 Layers I, II, III, AC-3等 | 互联网视频网站 |
-| TS   | MPEG          | 支持           | MPEG-1，MPEG-2，MPEG-4，H264 | MPEG-1 Layers I, II, III, AAC         | IPTV，数字电视 |
 | FLV  | Adobe         | 支持           | Sorenson，VP6, H264          | MP3, AAC                              | 互联网视频网站 |
+| TS   | MPEG          | 支持           | MPEG-1，MPEG-2，MPEG-4，H264 | MPEG-1 Layers I, II, III, AAC         | IPTV，数字电视 |
 | MKV  | CoreCodec     | 支持           | 几乎所有格式                 | 几乎所有格式                          | 互联网视频网站 |
 | RMVB | Real Networks | 支持           | RealVideo 8, 9, 10           | AAC，Cook Codec，RealAudio Lossless   | BT下载影视     |
+| AVI  | Microsoft     | 不支持         | 几乎所有格式                 | 几乎所有格式                          | BT下载影视     |
 
-## 2. mp4
+## 2. MP4
 
 ### 2.1 简介
 
@@ -769,6 +769,15 @@ mp4文件由多个box组成，每个box存储不同的信息，box之间呈树�
 每个 box 由 header 和 data 组成，其中 header 包含了 box 的类型和大小，data 包含具体数据或嵌套的子 box
 
 mp4格式分析工具有mp4info，mp4 explore，ffmpeg，Elecard StreamEye等。
+
+mp4默认的视频编码格式是h264，音频编码格式是aac
+
+![](https://note.youdao.com/yws/public/resource/28dd1bb1f4873a4dfd6f74ad8774c65a/xmlnote/5E8BBE2003834B31B308BEC886BE73CC/29219)
+
+**参考链接：**
+
+- [你真的懂 MP4 格式吗？MP4文件格式重点全解析！ - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/355803589)
+- [5分钟入门MP4文件格式 - 程序猿小卡 - 博客园 (cnblogs.com)](https://www.cnblogs.com/chyingp/p/mp4-file-format.html)
 
 ### 2.2 ftyp
 
@@ -833,10 +842,111 @@ User Data Box，自定义数据
 
 Media Data Box，存放具体的多媒体数据
 
-### 2.5 参考链接
+## 3. FLV
 
-- [你真的懂 MP4 格式吗？MP4文件格式重点全解析！ - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/355803589)
-- [5分钟入门MP4文件格式 - 程序猿小卡 - 博客园 (cnblogs.com)](https://www.cnblogs.com/chyingp/p/mp4-file-format.html)
+### 3.1 简介
+
+FLV（Flash Video）是Adobe公司推出的一种封装格式，主要用于流媒体系统。FLV格式具有体积小、播放简单等特点，很适合网络应用。
+
+FLV封装格式的文件扩展名为.flv。FLV文件由Header和Body组成，其中Body由一系列Tag和Tag Size组成
+
+FLV格式分析工具，有FlvAnalyzer
+
+<img src="https://note.youdao.com/yws/public/resource/28dd1bb1f4873a4dfd6f74ad8774c65a/xmlnote/3428F62DF18E40DD8A51625FD9277AD5/29225" style="zoom:95%;" />
+
+
+
+### 3.2 Header
+
+FLV格式的文件由FLV Header开头，Header 由以下字段组成
+
+| 字段              | 长度   | 说明                   |
+| ----------------- | ------ | ---------------------- |
+| Signature（签名） | 8 bit  | 字符 ‘F’               |
+| Signature         | 8 bit  | 字符 ‘L’               |
+| Signature         | 8 bit  | 字符 ‘V’               |
+| version           | 8 bit  | 版本号                 |
+| 保留位            | 5 bit  | 固定为0                |
+| 音频标记位        | 1 bit  | 1表示存在，0表示不存在 |
+| 保留位            | 1 bit  | 固定为0                |
+| 视频标记位        | 1 bit  | 1表示存在，0表示不存在 |
+| Data Offset       | 32 bit | Header长度             |
+
+下面以一个FLV文件具体分析
+
+![](https://note.youdao.com/yws/public/resource/28dd1bb1f4873a4dfd6f74ad8774c65a/xmlnote/19F0F663076C4B988803CEDF94BCA88C/29227)
+
+- 前3个字节，0x46 4C 56，分别对应 ‘F’、‘L’、‘V’字符
+- version字段0x01
+- 第5个字节 0x05，对应 0000 0101，表示既有音频，又有视频
+- 后4个字节，0x 00 00 00 09，表示Header 长度为9
+
+### 3.3 Body
+
+FLV Body 由一些列 Tag 和 Tag size 组成，具体排列方式见下表
+
+| 字段                            | 数据长度                 | 说明                     |
+| ------------------------------- | ------------------------ | ------------------------ |
+| PreTagSize 0（上一个Tag的长度） | 4字节                    | 前面没有tag，所以长度为0 |
+| Tag 1                           | **FLVTAG**（是一个类型） | 第1个Tag                 |
+| PreTagSize 1                    | 4字节                    | Tag 1的长度              |
+| Tag  2                          | FLVTAG                   | 第2个Tag                 |
+| PreTagSize 2                    | 4字节                    | Tag 2的长度              |
+| ......                          | ......                   | ......                   |
+| Tag N                           | FLVTAG                   | 第N个Tag                 |
+
+
+
+**FLVTAG 类型解析**
+
+| 字段                             | 数据长度 | 说明                                                         |
+| -------------------------------- | -------- | ------------------------------------------------------------ |
+| 保留位                           | 2 bit    | 为FMS保留，应该是0                                           |
+| 滤镜（Filter）                   | 1 bit    | 主要用来做文件内容加密。0：不预处理，1：预处理               |
+| TAG类型（Tag Type）              | 5 bit    | 8：音频Tag，9：视频Tag，18：脚本数据（Script Data，例如MetaData） |
+| 数据大小（Data Size）            | 24 bit   | Tag的数据部分长度                                            |
+| 时间戳（Timestamp）              | 24 bit   | 以ms为单位的展示时间                                         |
+| 扩展时间戳（Timestamp Extended） | 8 bit    | 针对时间戳增加的补充时间戳                                   |
+| 流ID（Stream ID）                | 24 bit   | 一直为0                                                      |
+| Tag的数据部分（Data）            |          | 音视频媒体数据，包含start code                               |
+
+- 数据大小占24位，最大为 0xFFFFFF，16777215字节。所以每个tag最大16M
+- 时间戳占24位，最大为 0xFFFFFF，16777215 ms，4.66小时。所以FLV格式采用这个时间戳，最大可存储4.66小时
+- 扩展时间戳占8位，最大为0xFF，使时间戳扩展到1193小时，49.7天
+
+#### 3.3.1 Audio Tag
+
+如果Tag Type为8，就表示该 Tag 为音频数据 Tag 
+
+| 字段                          | 数据长度               | 说明                                                         |
+| ----------------------------- | ---------------------- | ------------------------------------------------------------ |
+| 音频格式（Sound Format）      | 4 bit                  | 0：线性PCM，大小端取决于平台<br/> 1：ADPCM<br/> **2：MP3**<br/> 3：线性PCM，小端<br/> 4：Nellymoser 16kHz Mono<br/>  5：Nellymoser 8kHz Mono<br/> 6：Nellymoser<br/> 7：G.711 A-law<br/> 8：G.711 mu-law<br/> 9：保留<br/> **10：AAC**<br/> **11：Speex**<br/> 14：MP3 8kHz<br/> 15：设备支持的声音 |
+| 音频采样率（Sound Rate）      | 2 bit                  | 0：5.5 kHz<br/> 1：11 kHz<br/> 2：22 kHz<br/> 3：44 kHz      |
+| 采样大小（Sound Size）        | 1 bit                  | 0：8位采样<br/> 1：16位采样                                  |
+| 音频类型（Sound Type）        | 1 bit                  | 0：Mono Sound（单声道）<br/> 1：Stereo Sound（立体声）       |
+| 音频包类型（AAC Packet Type） | 8 bit（当音频位AAC时） | 0：AAC Sequence Header<br/> 1：AAC raw数据                   |
+| 音频数据                      |                        | 编码后的音频数据                                             |
+
+#### 3.3.2 Video Tag
+
+如果Tag Type为9，就表示该 Tag 为视频数据 Tag 
+
+| 字段                            | 数据长度                     | 说明                                                         |
+| ------------------------------- | ---------------------------- | ------------------------------------------------------------ |
+| 帧类型（Frame Type）            | 4 bit                        | 1：关键帧（H264使用，可以seek的帧）<br> 2：P帧或B帧（H264使用，不可以seek的帧）<br/> 3：仅应用于H 263 <br/> 4：生成关键帧（服务器端使用）<br/> 5：视频信息 / 命令帧 |
+| 编码标识（Codec ID）            | 4 bit                        | 2：Seorenson H 263（用的少）<br/> 3：Screen Video（用的少）<br/> 4：On2 VP6（偶尔用）<br/> 5：带Alpha通道的On2 VP6（偶尔用）<br/> 6：Screen Video 2（用的少）<br/> 7：H264（使用非常频繁） |
+| H.264的包类型（AVCPacket Type） | 8 bit（当Codec ID为H264时）  | 当H264编码封装在FLV中，需要三类H264数据<br/> 0：H264的 Sequence Header<br/> 1：NALU<br/> 2：H264的Sequence end |
+| CTS（Compostion Time）          | 24 bit（当Codec ID为H264时） | 当编码使用B帧时，DTS和PTS不相等，CTS用与表示PTS和DTS之间的差值 |
+| 视频数据                        | 视频数据                     | 编码后的视频数据                                             |
+
+#### 3.3.3 ScriptsData Tag
+
+如果Tag Type为18，就表示该 Tag 为ScriptsData Tag。Sctipts Data保存的是元数据信息，存储格式为AMF
+
+| 字段                      | 数据长度 | 说明                                                         |
+| ------------------------- | -------- | ------------------------------------------------------------ |
+| 类型（Type）              | 8 bit    | 0：Number<br/> 1：Boolean<br/> 2：String<br/> 3：Object<br/> 5：Null<br/> 6：Undefined<br/> 7：Reference<br/> 8：ECMA Array<br/> 9：Object end marker<br/> 10：Strict Array<br/> 11：Date<br/> 12：Long String |
+| 数据（Script Data Value） |          |                                                              |
 
 # 五、ffmpeg命令
 
@@ -1039,12 +1149,17 @@ B --> |muxer 封装| C[输出文件]
 **用ffmpeg进行格式转换**
 
 ```shell
+// 下面两条命令等同
 ffmpeg -i in.mp4 -vcodec copy -acodec copy out.flv
+ffmpeg -i in.mp4 -c copy -f flv out.flv
 ```
 
 - -i：输入文件
 - -vcodec copy：视频编码处理方式，copy即复制
 - -acodec copy：音频编码处理方式，copy即复制
+- -c copy：音视频编码处理方式，copy
+
+注意：每种封装格式，有支持的音视频编码格式。如果格式转换时，遇到了不支持的音频、视频编码格式，需要将其转换为支持的编码格式
 
 
 
