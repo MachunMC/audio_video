@@ -10,10 +10,11 @@
   - [ ] TS
 - [ ] 音频编码格式
   - [ ] AAC
-  - [ ] OPUS
+  - [ ] MP3
 - [ ] 流媒体协议
   - [ ] RTMP
   - [ ] RTSP
+  - [ ] HTTP
   - [ ] RTP
   - [ ] RTCP
 
@@ -98,7 +99,7 @@ will help solve the problem.
 
    ```shell
    git clone git://source.ffmpeg.org/ffmpeg.git ffmpeg
-   ./configure --enable-shared --prefix=/usr/local/ffmpeg --enable-gpl --enable-nonfree --enable-libfdk-aac --enable-libx264
+   sudo ./configure --enable-shared --prefix=/usr/local/ffmpeg --enable-gpl --enable-nonfree --enable-libfdk-aac --enable-libx264 --enable-libmp3lame --enable-libfreetype --enable-libfontconfig --enable-libfribidi
    sudo make
    sudo make install
    ```
@@ -948,7 +949,21 @@ FLV Body 由一些列 Tag 和 Tag size 组成，具体排列方式见下表
 | 类型（Type）              | 8 bit    | 0：Number<br/> 1：Boolean<br/> 2：String<br/> 3：Object<br/> 5：Null<br/> 6：Undefined<br/> 7：Reference<br/> 8：ECMA Array<br/> 9：Object end marker<br/> 10：Strict Array<br/> 11：Date<br/> 12：Long String |
 | 数据（Script Data Value） |          |                                                              |
 
-# 五、ffmpeg命令
+# 五、流媒体协议
+
+## 1. RTMP
+
+[直播技术的背后--RTMP协议 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/157429042)
+
+[一篇文章搞清楚直播协议RTMP - 掘金 (juejin.cn)](https://juejin.cn/post/6956240080214327303)
+
+[Enscript Output (adobe.com)](https://wwwimages2.adobe.com/content/dam/acom/en/devnet/rtmp/pdf/rtmp_specification_1.0.pdf)
+
+## 2. RTSP
+
+
+
+# 六、ffmpeg命令
 
 ## 1. 命令分类
 
@@ -1373,7 +1388,7 @@ ffplay rtmp://localhost/vod/wanfengqingqishi.mp4  // 注意这里要加vod，对
 ### 10.2 推流
 
 ```shell
-ffmpeg -re -i out.mp4 -c copy -f flv rtmp://server/live/streamName
+ffmpeg -re -i input.mp4 -c copy -f flv rtmp://server/live/streamName
 ```
 
 - -re：减慢帧率速度
@@ -1421,7 +1436,7 @@ ffmpeg -i in.mov -vf crop=in_w -200:in_h-200 -c:v libx264 -c:a copy out.mp4
 - -c:v：指定视频编码器，libx264
 - -c:a：指定音频编码器，copy表示不做处理
 
-# 五、ffmpeg初级开发
+# 七、ffmpeg初级开发
 
 ## 1. ffmpeg代码结构
 
