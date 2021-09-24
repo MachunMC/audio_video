@@ -1,3 +1,17 @@
+# 招聘大致要求
+
+1. 熟悉C/C++，熟悉STL
+2. 熟悉常用数据结构和算法
+3. 熟悉网络基本原理，熟悉TCP/IP协议
+4. 熟悉FFmpeg、webrtc、librtmp、SDL、opencv、libyuv，有实际使用经验
+5. 熟悉常见的音视频编解码协议和封装格式，如H264、H265、mjpeg、mp4、avi、ps、ts、aac、opus等
+6. 熟悉网络流媒体协议，如rtp、rtsp、rtmp、hls、onvif
+7. 有ios、mac、android、linux、windows至少一个平台的开发经验，熟悉系统相关的API
+
+
+
+# 待办事项
+
 - [ ] FFmpeg录制命令
 - [ ] FFmpeg滤镜命令
 - [ ] RGB格式
@@ -99,8 +113,8 @@ will help solve the problem.
 
    ```shell
    git clone git://source.ffmpeg.org/ffmpeg.git ffmpeg
-   sudo ./configure --enable-shared --prefix=/usr/local/ffmpeg --enable-gpl --enable-nonfree --enable-libfdk-aac --enable-libx264 --enable-libmp3lame --enable-libfreetype --enable-libfontconfig --enable-libfribidi
-   sudo make
+   sudo ./configure --enable-shared --prefix=/usr/local/ffmpeg --enable-gpl --enable-nonfree --enable-libfdk-aac --enable-libx264 --enable-libmp3lame --enable-libfreetype --enable-libfontconfig --enable-libfribidi --enable-libass
+   sudo make -j16
    sudo make install
    ```
 
@@ -1419,13 +1433,17 @@ ffmpeg -i rtmp://server/live/streamName -c copy dump.flv
 
 ## 11. 滤镜
 
+**给视频添加文字水印**
+
+
+
 ```mermaid
 graph LR
 
 A[解码数据] --> |滤镜处理| B[处理后的数据] --> |编码| C[编码数据]
 ```
 
-视频宽高裁剪
+**视频宽高裁剪**
 
 ```shell
 ffmpeg -i in.mov -vf crop=in_w -200:in_h-200 -c:v libx264 -c:a copy out.mp4
