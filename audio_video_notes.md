@@ -8,12 +8,10 @@
 6. 熟悉网络流媒体协议，如rtp、rtsp、rtmp、hls、onvif
 7. 有ios、mac、android、linux、windows至少一个平台的开发经验，熟悉系统相关的API
 
-
-
 # 待办事项
 
-- [ ] FFmpeg录制命令
-- [ ] FFmpeg滤镜命令
+- [x] FFmpeg录制命令
+- [x] FFmpeg滤镜命令
 - [ ] RGB格式
 - [ ] 视频编码格式
   - [x] H264
@@ -113,7 +111,7 @@ will help solve the problem.
 
    ```shell
    git clone git://source.ffmpeg.org/ffmpeg.git ffmpeg
-   sudo ./configure --enable-shared --prefix=/usr/local/ffmpeg --enable-gpl --enable-nonfree --enable-libfdk-aac --enable-libx264 --enable-libmp3lame --enable-libfreetype --enable-libfontconfig --enable-libfribidi --enable-libass
+   sudo ./configure --enable-shared --prefix=/usr/local/ffmpeg --enable-gpl --enable-nonfree --enable-libfdk-aac --enable-libx264 --enable-libmp3lame --enable-libfreetype --enable-libfontconfig --enable-libfribidi --enable-libass --enable-libv4l2
    sudo make -j16
    sudo make install
    ```
@@ -1064,6 +1062,18 @@ Devices:
 
 用于采集摄像头数据，设备对应的文件是 /dev/video0
 
+编译ffmpeg时，需要加 **--enable-libv4l2**选项
+
+```shell
+sudo apt install v4l-utils  // 安装v4l2-ctl工具
+```
+
+采集命令如下：
+
+```shell
+ffmpeg -i /dev/video0 -f video4linux2 -s 1920x1080 output.avi
+```
+
 ### 4.2 alsa 
 
 音频采集设备，要想使用这个设备，必须先安装libasound库。ubuntu下执行下面命令
@@ -1117,6 +1127,14 @@ ffmpeg -f alsa -channels 1 -sample_rate 44100 -i hw:0 alsaout2.wav
 
 用于采集桌面数据
 
+```shell
+ffmpeg -f x11grab -s 1920x1080 -r 25 -i :0.0+0+0 luping.mp4
+```
+
+- -f：指定使用哪个库
+- -i：指定从哪儿采集数据，是一个文件索引
+- -r：指定帧率
+
 ### 4.4 fbdev
 
 用于采集终端数据，设备对应的文件是 /dev/fb0
@@ -1142,27 +1160,7 @@ ffmpeg -framerate 30 -f fbdev -i /dev/fb0 out.wav
 
 上述命令执行后，linux会获取终端中的图像，而不是图形界面的图像
 
-## 5. 录制命令
-
-**录制桌面**
-
-```shell
-ffmpeg -f x11grab -s 1920x1080 -r 25 -i :0.0+0+0 luping.mp4
-```
-
-- -f：指定使用哪个库
-- -i：指定从哪儿采集数据，是一个文件索引
-- -r：指定帧率
-
-5.2 摄像头
-
-5.3 麦克风
-
-5.4 摄像头 + 麦克风
-
-5.5 桌面 + 麦克风
-
-## 6. 格式转换
+## 5. 格式转换
 
 即分解与复用
 
@@ -1215,11 +1213,11 @@ ffmpeg -i in.mp4 -vn -acodec copy out.aac
 - 如果输入文件中没有音频，要提取音频就会报错；同理，没有视频，要提取视频也会报错
 - 注意提取的视频文件后缀名，要和ffprobe查看的视频格式相同，否则播放有问题
 
-## 7. 提取原始数据
+## 6. 提取原始数据
 
 视频原始数据是 YUV 数据，音频原始数据是 PCM 数据
 
-### 7.1 提取YUV数据
+### 6.1 提取YUV数据
 
 ```shell
 ffmpeg -i short_mv.mp4 -an -c:v rawvideo -pix_fmt yuv420p out.yuv
@@ -1236,7 +1234,7 @@ UV数据时，需要指定分辨率，否则播放不出来。分辨率可以在
 
 ![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/E063CFCD4F874E8BB664AAB3A2771467/28893)
 
-### 7.2 提取PCM数据
+### 6.2 提取PCM数据
 
 ```shell
 ffmpeg -i short_mv.mp4 -vn -ar 44100 -ac 2 -f s16le out.pcm
@@ -1252,9 +1250,9 @@ ffmpeg -i short_mv.mp4 -vn -ar 44100 -ac 2 -f s16le out.pcm
 
 ![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/8037AADD3C7140628A6658407438C764/28895)
 
-## 8. 裁剪与拼接
+## 7. 裁剪与拼接
 
-### 8.1 音视频裁剪
+### 7.1 音视频裁剪
 
 ```shell
 ffmpeg -i input.mp4 -ss 00:01:20 -t 20 out.mp4
@@ -1265,7 +1263,7 @@ ffmpeg -i input.mp4 -ss 00:01:20 -t 20 out.mp4
 
 **需要注意裁剪的开始时间，是否在视频的有效时间内**
 
-### 8.2 音视频拼接
+### 7.2 音视频拼接
 
 ```shell
 ffmpeg -f concat -i inputs.txt out.mp4
@@ -1283,9 +1281,9 @@ file '2.mp4'
 machun@ubuntu:~/ffmpeg_learn$ ffmpeg -f concat -i inputs.txt 3.mp4
 ```
 
-## 9. 图片和视频互转
+## 8. 图片和视频互转
 
-### 9.1 视频转图片
+### 8.1 视频转图片
 
 ```shell
 ffmpeg -i input.flv -r 1 -f image2 image-%3d.jpeg
@@ -1303,7 +1301,7 @@ ffmpeg -i input.flv -r 1 -f image2 image-%3d.jpeg
 
 <img src="https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/B9431A99415A4CF0A8F688307DEEAFFB/28901" style="zoom:80%;" />
 
-### 9.2 图片转视频
+### 8.2 图片转视频
 
 ```shell
 ffmpeg -i image-%3d.jpeg out.mp4
@@ -1325,9 +1323,9 @@ ffmpeg -r 1 -i image-%02d.jpeg -vf fps=1 out.mp4
 
 图片转视频，还可以设置分辨率信息
 
-## 10. 推拉流
+## 9. 推拉流
 
-### 10.1 Ubuntu Nginx搭建RTMP服务器
+### 9.1 Ubuntu Nginx搭建RTMP服务器
 
 参考链接：[Nginx搭建rtmp流媒体服务器(Ubuntu 16.04) - 简书 (jianshu.com)](https://www.jianshu.com/p/16741e363a77)
 
@@ -1399,7 +1397,7 @@ ffplay rtmp://localhost/vod/wanfengqingqishi.mp4  // 注意这里要加vod，对
 
 - 直播，ffmpeg往RTMP服务器推流，然后可以用ffplay直接播放
 
-### 10.2 推流
+### 9.2 推流
 
 ```shell
 ffmpeg -re -i input.mp4 -c copy -f flv rtmp://server/live/streamName
@@ -1415,7 +1413,7 @@ ffmpeg -re -i input.mp4 -c copy -f flv rtmp://server/live/streamName
 ffmpeg -re -i wanfeng.mp4 -c copy -f flv rtmp://localhost/live_1/wangfeng
 ```
 
-### 10.3 拉流
+### 9.3 拉流
 
 可以直接用ffplay播放
 
@@ -1431,11 +1429,19 @@ ffmpeg -i rtmp://server/live/streamName -c copy dump.flv
 
 - -c copy：表示不重新编码，直接复制
 
-## 11. 滤镜
+## 10. 滤镜
 
-**给视频添加文字水印**
+### 10.1给视频添加水印
 
+添加文字、图片水印
 
+### 10.2 制作视频画中画
+
+### 10.3 制作视频多宫格
+
+### 10.4 给视频添加字幕
+
+### 10.5 音视频倍速播放
 
 ```mermaid
 graph LR
@@ -1458,15 +1464,15 @@ ffmpeg -i in.mov -vf crop=in_w -200:in_h-200 -c:v libx264 -c:a copy out.mp4
 
 ## 1. ffmpeg代码结构
 
-| 目录          | 功能                         |
-| ------------- | ---------------------------- |
-| libavcodec    | 编解码器相关                 |
-| libavformat   | 流协议、容器格式、基本IO操作 |
-| liavutil      | hash、解码器、各种工具函数   |
-| libavfilter   | 音视频滤镜                   |
-| libavdevice   | 设备相关                     |
-| libswresample | 混音、重采样                 |
-| libswscale    | 色彩转换、缩放               |
+| 目录          | 功能                       |
+| ------------- | -------------------------- |
+| libavcodec    | 编解码相关                 |
+| libavformat   | 封装和解封装、流媒体协议   |
+| liavutil      | hash、解码器、各种工具函数 |
+| libavfilter   | 滤镜相关                   |
+| libavdevice   | 设备相关                   |
+| libswresample | 混音、重采样               |
+| libswscale    | 色彩转换、缩放             |
 
 ## 2. 日志
 
