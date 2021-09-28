@@ -1464,15 +1464,15 @@ ffmpeg -i in.mov -vf crop=in_w -200:in_h-200 -c:v libx264 -c:a copy out.mp4
 
 ## 1. ffmpeg代码结构
 
-| 目录          | 功能                       |
-| ------------- | -------------------------- |
-| libavcodec    | 编解码相关                 |
-| libavformat   | 封装和解封装、流媒体协议   |
-| liavutil      | hash、解码器、各种工具函数 |
-| libavfilter   | 滤镜相关                   |
-| libavdevice   | 设备相关                   |
-| libswresample | 混音、重采样               |
-| libswscale    | 色彩转换、缩放             |
+| 目录          | 功能                          |
+| ------------- | ----------------------------- |
+| libavcodec    | 编解码相关                    |
+| libavformat   | I/O，封装和解封装、流媒体协议 |
+| liavutil      | hash、解码器、各种工具函数    |
+| libavfilter   | 滤镜相关                      |
+| libavdevice   | 设备相关                      |
+| libswresample | 混音、重采样                  |
+| libswscale    | 色彩转换、缩放                |
 
 ## 2. 日志
 
@@ -1555,4 +1555,8 @@ ADTS头包含音频的采样率，声道数，帧长度等信息，ADTS头长度
 - Start code：特征码，用于区分视频帧
 - SPS / PPS：解码的视频参数，分辨率等信息
 - codec->extradata：获取SPS / PPS数据
+
+## 9. 音视频流封装
+
+参考ffmpeg官方文档说明：[FFmpeg: Muxing](https://ffmpeg.org/doxygen/trunk/group__lavf__encoding.html#ga18b7b10bb5b94c4842de18166bc677cb)
 
