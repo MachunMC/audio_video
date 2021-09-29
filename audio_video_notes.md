@@ -32,6 +32,12 @@
 
 
 
+# 参考连接
+
+- [总结\]FFMPEG视音频编解码零基础学习方法_雷霄骅(leixiaohua1020)的专栏-CSDN博客_ffmpeg雷霄骅](https://blog.csdn.net/leixiaohua1020/article/details/15811977?spm=1001.2014.3001.5502)
+
+- [GitHub - xhunmon/VABlog: 0基础学习音视频路线，以及重磅音视频资料下载。](https://github.com/xhunmon/VABlog)
+
 # 一、ffmpeg基础
 
 ## 1. ffmpeg介绍
@@ -1462,7 +1468,22 @@ ffmpeg -i in.mov -vf crop=in_w -200:in_h-200 -c:v libx264 -c:a copy out.mp4
 
 # 七、ffmpeg初级开发
 
-## 1. ffmpeg代码结构
+## 1. 基本概念
+
+- 多媒体文件是一个容器，例如mp4文件，其中包含视频数据、音频数据、字幕数据等
+- 每个容器中都有很多流（stream），例如视频流、音频流、字幕流，每条流的数据没有交叉
+- 每条流是由不同的编码器编码的
+- 从流中读出的数据称为包，包中的数据都是压缩后的数据
+- 每包数据由一帧或多帧组成
+- 一帧或多桢数据组成一个包，一包或多包组成一条流，一条或多条流组成一个多媒体文件
+
+```mermaid
+graph LR
+
+A[桢] --> |组成| B[包] --> |组成| C[流] --> |组成| D[多媒体文件]
+```
+
+## 2. ffmpeg代码结构
 
 | 目录          | 功能                          |
 | ------------- | ----------------------------- |
@@ -1474,7 +1495,7 @@ ffmpeg -i in.mov -vf crop=in_w -200:in_h-200 -c:v libx264 -c:a copy out.mp4
 | libswresample | 混音、重采样                  |
 | libswscale    | 色彩转换、缩放                |
 
-## 2. 日志
+## 3. 日志
 
 - 头文件
 
@@ -1494,46 +1515,101 @@ av_log_set_level(AV_LOG_DEBUG);
 av_log(NULL, AV_LOG_ERROR, char *fmt, ...);
 ```
 
-## 3. 多媒体文件的基本概念
+## 4. 获取元数据
 
-- 多媒体文件是一个容器，例如mp4文件，其中包含视频数据、音频数据、字幕数据等
-- 每个容器中都有很多流（stream），例如视频流、音频流、字幕流，每条流的数据没有交叉
-- 每条流是由不同的编码器编码的
-- 从流中读出的数据称为包，包中的数据都是压缩后的数据
-- 每包数据由一帧或多帧组成
-- 一帧或多桢数据组成一个包，一包或多包组成一条流，一条或多条流组成一个多媒体文件
+对应官方示例：doc/examples/metadata.c
 
 ```mermaid
 graph LR
 
-A[桢] --> |组成| B[包] --> |组成| C[流] --> |组成| D[多媒体文件]
+A[avformat_open_input] --> B[avformat_find_stream_info]
+B --> C[av_dump_format / av_dict_get]
+C --> D[avformat_close_input]
 ```
 
+元数据（Metadata)，就是音视频文件相关的描述信息，如包含了几条流，每条流的类型（视频流还是音频流），时长，视频流的编码格式、码率、分辨率、帧率、宽高比，音频流的编码格式、采样率、声道数、码率等
 
+`av_dump_format`直接输出`AVFormatContext`中有关多媒体描述信息的相关数据，包括`metadata`和其他参数，`av_dict_get`只输出`metadata`中的数据
 
-## 4. 几个重要的结构体
+`avformat_open_inpu`、`avformat_find_stream_info`、`avformat_close_input`的使用，可参考下一节解封装部分的说明
 
-- AVFormatContext：格式上下文，连接多个API之间的桥梁
-- AVStream：流相关
-- AVPacket：包相关
-
-## 5. ffmpeg操作流数据的基本步骤
-
-```mermaid
-graph LR
-
-A[多媒体文件 ] --> B[解复用] --> C[获取流] --> D[读取数据包] --> E[其他操作] --> F[释放资源]
-```
-
-## 6. 获取元数据（Metadata)
-
-- avformat_open_input、avformat_close_input：打开/关闭多媒体文件
-
-- av_dump_format：获取输入信息的详细信息
-
-元数据就是音视频文件相关的描述信息，如包含了几条流，每条流的类型（视频流还是音频流），时长，视频流的编码格式、码率、分辨率、帧率、宽高比，音频流的编码格式、采样率、声道数、码率等
+下面图1是`av_dump_format`的输出信息，图2是`av_dict_get`的输出信息
 
 ![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/B44699EE23D24E0BBD78AAAEAC118F42/29020)
+
+![](https://note.youdao.com/yws/public/resource/28dd1bb1f4873a4dfd6f74ad8774c65a/xmlnote/0B795AD45B5442B6A2F6D1B137619798/29495)
+
+## 5. 音视频流封装
+
+### 5.1 解封装 Demuxing
+
+参考ffmpeg官方文档说明：[FFmpeg: Demuxing](https://ffmpeg.org/doxygen/trunk/group__lavf__decoding.html)
+
+主要函数调用：
+
+```mermaid
+graph TB
+
+A[avformat_open_input] --> z[avformat_find_stream_info] 
+z --> Y[av_find_best_stream]
+Y --> B[av_read_frame]
+B --> X[av_packet_unref]
+X --> C[avformat_close_input]
+```
+
+1. **打开多媒体文件，创建上下文**
+
+   `avformat_open_input`打开指定的文件（会自动检测文件类型），并读取文件头，然后导出信息保存到ps参数中。有些格式没有头部，或者没有存储足够的信息，所以建议再调用`avformat_find_stream_info`，尝试读取并解码部分帧，来获取缺失的信息。
+
+   下面是是否调用`avformat_find_stream_info`，来`av_dump_format`获取到的信息对比。左边是调用了该接口，右边是没调
+
+   ![](https://note.youdao.com/yws/public/resource/28dd1bb1f4873a4dfd6f74ad8774c65a/xmlnote/6B90BF4F532F45A28B4E750D144D2452/29465)
+
+2. **找到对应的流**
+
+   `av_find_best_stream`找到对应的流（视频流、音频流、字幕流）的索引
+
+3. **从打开的多媒体文件中读取数据**
+
+   通过反复调用`av_read_frame`来读取编码数据。返回`AVPacket`类型，其中`AVPacket.stream_index`标识了是哪条流（视频流、音频、字幕）。通过`av_read_frame`返回的数据包有引用计数，用户可以长期的使用，但如果不需要了，一定要调用`av_packet_unref`释放掉
+
+3. **释放资源**
+
+   调用`avformat_open_input`后，一定要调用`avformat_close_input`，释放和打开文件相关的信息
+
+### 5.2 封装 Muxing
+
+参考ffmpeg官方文档说明：[FFmpeg: Muxing](https://ffmpeg.org/doxygen/trunk/group__lavf__encoding.html#ga18b7b10bb5b94c4842de18166bc677cb)
+
+主要函数调用：
+
+```mermaid
+graph TB
+
+A[avformat_alloc_context] --> B[avformat_write_header] 
+B --> C[av_write_frame / av_interleaved_write_frame]
+C --> D[av_write_trailer] --> E[avformat_free_context]
+```
+
+1. **创建上下文**
+
+   开始封装前，首先需要调用 `avformat_alloc_context` 创建一个上下文，然后设置context中各种字段
+
+2. **写入文件头**
+
+   当context设置好，需要调用 `avformat_write_header`初始化muxer内部，并写入头部信息。会不会写入IO context取决于muxer，但这个函数一定要调用。muxer私有选项需要通过options参数传入
+
+3. **写入数据帧**
+
+   通过循环的调用`av_write_fram`或`av_interleaved_write_frame`写入数据。两个接口的区别在于，`av_write_fram`会直接将packet写入muxer，不会缓存和排序，如果格式有要求，需要调用者自己进行排序。而`av_interleaved_write_frame`会处理packet的顺序，不需要调用者关心。数据packets的时间信息，需要对应 `AVStream`中的`time_base`参数，这个参数是在`avformat_write_header`是设置的
+
+4. **刷新缓冲区，并写入文件**
+
+   当所有数据写完后，需要调用`av_write_trailer`将刷新缓冲区并将数据写入文件
+
+5. **释放上下文**
+
+   最后调用`avformat_free_context`释放muxer上下文
 
 ## 7. 抽取音频数据
 
@@ -1556,7 +1632,23 @@ ADTS头包含音频的采样率，声道数，帧长度等信息，ADTS头长度
 - SPS / PPS：解码的视频参数，分辨率等信息
 - codec->extradata：获取SPS / PPS数据
 
-## 9. 音视频流封装
+# 八、SDL
 
-参考ffmpeg官方文档说明：[FFmpeg: Muxing](https://ffmpeg.org/doxygen/trunk/group__lavf__encoding.html#ga18b7b10bb5b94c4842de18166bc677cb)
+## 1. 简介
+
+SDL是Simple Direct Media Layer的缩写，是一个跨平台的多媒体库。提供了针对音频、视频、鼠标、键盘等的访问接口，在播放软件、模拟器和游戏领域获得了广泛的应用。
+
+SDL是用C编写的，但可以原生的配合C++使用，并且拥有一些其他语言的绑定
+
+[目录 · SDL中文教程 (tjumyk.github.io)](http://tjumyk.github.io/sdl-tutorial-cn/contents.html)
+
+## 2. 编译
+
+```shell
+git clone https://github.com/libsdl-org/SDL.git
+cd SDL
+sudo ./configure --prefix=/usr/local/sdl
+sudo make -j4 
+sudo make install
+```
 
