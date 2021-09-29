@@ -19,7 +19,7 @@
         {
             "type": "cppbuild",
             "label": "C/C++: g++ 生成活动文件",
-            "command": "/usr/bin/g++",
+            "command": "/usr/bin/gcc",
             "args": [
                 "-g",
                 "${file}",
@@ -31,7 +31,10 @@
                 "-lavdevice",
                 "-lswresample",
                 "-lavfilter",
+                "-lswscale",
+                "-lm",
                 "-L'/usr/local/ffmpeg/lib'",
+                "-L'/lib/x86_64-linux-gnu/'",
                 "-I'/usr/local/ffmpeg/include'"
             ],
             "options": {
