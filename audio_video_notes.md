@@ -1571,7 +1571,7 @@ X --> C[avformat_close_input]
 
 3. **从打开的多媒体文件中读取数据**
 
-   通过反复调用`av_read_frame`来读取编码数据。返回`AVPacket`类型，其中`AVPacket.stream_index`标识了是哪条流（视频流、音频、字幕）。通过`av_read_frame`返回的数据包有引用计数，用户可以长期的使用，但如果不需要了，一定要调用`av_packet_unref`释放掉
+   通过反复调用`av_read_frame`来读取编码数据。返回`AVPacket`类型，其中`AVPacket.stream_index`标识了是哪条流（视频流、音频、字幕）。通过`av_read_frame`返回的数据包有引用计数，用户可以长期使用，但如果不需要了，一定要调用`av_packet_unref`释放掉
 
 3. **释放资源**
 
