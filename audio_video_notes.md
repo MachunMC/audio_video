@@ -1561,7 +1561,7 @@ X --> C[avformat_close_input]
 
    `avformat_open_input`打开指定的文件（会自动检测文件类型），并读取文件头，然后导出信息保存到ps参数中。有些格式没有头部，或者没有存储足够的信息，所以建议再调用`avformat_find_stream_info`，尝试读取并解码部分帧，来获取缺失的信息。
 
-   下面是是否调用`avformat_find_stream_info`，来`av_dump_format`获取到的信息对比。左边是调用了该接口，右边是没调
+   下面是有没有调用`avformat_find_stream_info`，来`av_dump_format`获取到的信息对比。左边是调用了该接口，右边是没调
 
    ![](https://note.youdao.com/yws/public/resource/28dd1bb1f4873a4dfd6f74ad8774c65a/xmlnote/6B90BF4F532F45A28B4E750D144D2452/29465)
 
