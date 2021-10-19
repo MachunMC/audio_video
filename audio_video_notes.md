@@ -15,9 +15,8 @@
   - [ ] AAC
   - [ ] MP3
 - [ ] 流媒体协议
-  - [ ] RTMP
+  - [x] RTMP
   - [ ] RTSP
-  - [ ] HTTP
   - [ ] RTP
   - [ ] RTCP
 
@@ -927,7 +926,7 @@ FLV Body 由一些列 Tag 和 Tag size 组成，具体排列方式见下表
 
 ## 2. RTSP
 
-
+## 3. RTP
 
 # 六、ffmpeg命令
 
