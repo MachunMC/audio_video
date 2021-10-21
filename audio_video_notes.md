@@ -10,18 +10,6 @@
 
 # 待办事项
 
-- [ ] RGB格式
-- [ ] 音频编码格式
-  - [ ] AAC
-  - [ ] MP3
-- [ ] 流媒体协议
-  - [x] RTMP
-  - [ ] RTSP
-  - [ ] RTP
-  - [ ] RTCP
-
-
-
 # 参考连接
 
 - [总结\]FFMPEG视音频编解码零基础学习方法_雷霄骅(leixiaohua1020)的专栏-CSDN博客_ffmpeg雷霄骅](https://blog.csdn.net/leixiaohua1020/article/details/15811977?spm=1001.2014.3001.5502)
