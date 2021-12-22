@@ -1,189 +1,10 @@
-# 招聘大致要求
-
-1. 熟悉C/C++，熟悉STL
-2. 熟悉常用数据结构和算法
-3. 熟悉网络基本原理，熟悉TCP/IP协议
-4. 熟悉FFmpeg、webrtc、librtmp、SDL、opencv、libyuv，有实际使用经验
-5. 熟悉常见的音视频编解码协议和封装格式，如H264、H265、mjpeg、mp4、avi、ps、ts、aac、opus等
-6. 熟悉网络流媒体协议，如rtp、rtsp、rtmp、hls、onvif
-7. 有ios、mac、android、linux、windows至少一个平台的开发经验，熟悉系统相关的API
-
-# 待办事项
-
 # 参考连接
 
 - [总结\]FFMPEG视音频编解码零基础学习方法_雷霄骅(leixiaohua1020)的专栏-CSDN博客_ffmpeg雷霄骅](https://blog.csdn.net/leixiaohua1020/article/details/15811977?spm=1001.2014.3001.5502)
 
 - [GitHub - xhunmon/VABlog: 0基础学习音视频路线，以及重磅音视频资料下载。](https://github.com/xhunmon/VABlog)
 
-# 一、ffmpeg基础
-
-## 1. ffmpeg介绍
-
-ffmpeg既是一款音视频编解码工具，也是一组音视频编解码开发组件。
-
-ffmpeg提供了多种媒体格式的封装和解封装，包括多种音视频编码、多种协议的流媒体、多种色彩格式转换、多种采样率转换、多种码率转换等。同时ffmpeg框架提供了多种插件模块，包含封装和解封装的插件、编码和解码的插件等。
-
-ffmpeg框架由5个基本模块组成。  
-
-- 封装模块：AVFormat
-- 编解码模块：AVCodec
-- 滤镜模块：AVFilter
-- 视频图像转换模块：swscale
-- 音频转换模块：swresample
-
-ffmpeg提供了如下3个工具。
-
-- 编解码工具：ffmpeg
-- 播放器：ffplay
-- 多媒体分析器：ffprobe
-
-## 2. 如何安装ffmpeg
-
-> 下面以ubuntu为例，说明如何安装ffmpeg
-
-### 2.1 源码编译ffmpeg
-
-**ubuntu发行版中已经包含了ffmpeg的安装包，但是可能版本比较老，对于一些新的编码格式和协议格式可能不支持，所以尽可能手动编译ffmpeg。**
-
-默认编译FFmpeg时，需要用到**yasm汇编器**对ffmpeg中的汇编部分进行编译。如果不需要用到汇编部分的代码，可以不安装yasm汇编器。如果没有安装该汇编器，执行默认配置的时候会报错。
-
-```shell
-michael@ubuntu:~/ffmpeg/package$ ./configure 
-nasm/yasm not found or too old. Use --disable-x86asm for a crippled build.
-
-If you think configure made a mistake, make sure you are using the latest
-version from Git.  If the latest version fails, report the problem to the
-ffmpeg-user@ffmpeg.org mailing list or IRC #ffmpeg on irc.freenode.net.
-Include the log file "ffbuild/config.log" produced by configure as this 
-will help solve the problem.
-```
-
-1. 编译安装yasm
-
-   ```shell
-   wget http://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz
-   ./configure 
-   sudo make 
-   sudo make install
-   ```
-
-2. 安装xorg-dev和SDL这两个库（缺少这两个库，无法编译出ffplay）
-
-   注意：旧版本ffplay依赖于SDL 1.2，而新版本依赖于SDL 2.0，需要安装对应的SDL才能编译生成ffplay
-
-   ```shell
-   sudo apt-get install xorg-dev
-   sudo apt-get install libsdl2-dev
-   ```
-
-3. 安装libfdk_aac、libopus、libx264
-
-   注：使用--enable-libfdk-aac编译选项时，需要先安装fdk_aac，否则会报 ERROR: libfdk_aac not found的错误，原因是fdk_aac已经从ffmpeg中独立出来了，所以需要先安装fdk_aac。同理，libopus和libx264也是一样
-   
-   ```shell
-   sudo apt install libfdk-aac-dev
-   sudo apt install libopus-dev
-   sudo apt install libx264-dev
-   ```
-
-4. 编译安装ffmpeg（ffmpeg源码可以到官网上下载，git下载比较慢）
-
-   注：--enable-shared 指定编译动态库，使用静态库编码的时候会报undefined reference的错误
-
-   ffmpeg常用配置：[ffmpeg configure配置选项_一个人像一支队伍-CSDN博客](https://blog.csdn.net/momo0853/article/details/78043903)
-
-   ```shell
-   git clone git://source.ffmpeg.org/ffmpeg.git ffmpeg
-   sudo ./configure --enable-shared --prefix=/usr/local/ffmpeg --enable-gpl --enable-nonfree --enable-libfdk-aac --enable-libx264 --enable-libmp3lame --enable-libfreetype --enable-libfontconfig --enable-libfribidi --enable-libass --enable-libv4l2
-   sudo make -j16
-   sudo make install
-   ```
-
-5. 安装完成后，将ffmpeg的安装路径，添加到PATH环境变量
-
-   ```shell
-   sudo vi /etc/profile
-   添加 export PATH=$PATH:/usr/local/ffmpeg/bin
-   sudo source /etc/profile
-   ```
-
-
-
-
-**可能遇到的问题**
-
-1. 安装完成，执行ffmpeg，可能会遇到下面的报错
-
-   ```shell
-   /usr/local/ffmpeg/bin/ffmpeg: error while loading shared libraries: libavdevice.so.59: cannot open shared object file: No such file or directory
-   ```
-
-   解决方法：
-
-   ```shell
-   sudo vi /etc/ld.so.conf
-   在文件中添加路径：/usr/local/ffmpeg/lib   #该目录是ffmpeg的安装目录，根据个人不同安装目录修改。
-   sudo ldconfig
-   ```
-
-
-
-**ffplay与ffplay_g的区别**
-
-编译之后会发现，文件夹中同时出现了ffplay与ffplay_g（还有ffmpeg与ffmpeg_g）。这个多出来的g是做什么的呢？
-
-实际上，ffplay_g是含有调试信息的可执行文件，当我们想要调试时（比如新建一个工程对源码进行调试）会需要到它，而一般来说在实际使用的时候，我们会使用ffplay，它是ffplay_g经过strip之后得到的文件
-
-### 2.2 apt安装ffmeg
-
-1. 添加源
-
-   ```shell
-   sudo add-apt-repository ppa:djcj/hybrid
-   ```
-
-2. 更新源
-
-   ```shell
-   sudo apt-get update
-   ```
-
-3. 下载ffmpeg
-
-   ```shell
-   sudo apt-get install ffmpeg
-   ```
-
-4. 查看ffmpeg安装路径和基本信息
-
-   ```shell
-   michael@ubuntu:~/ffmpeg$ whereis ffmpeg
-   ffmpeg: /usr/bin/ffmpeg /usr/share/ffmpeg /usr/share/man/man1/ffmpeg.1.gz
-   michael@ubuntu:~$ ffmpeg
-   ffmpeg version 2.8.15-0ubuntu0.16.04.1 Copyright (c) 2000-2018 the FFmpeg developers
-     *****省略多余信息*****
-   Use -h to get full help or, even better, run 'man ffmpeg'
-   ```
-
-### 2.3 卸载ffmpeg
-
-用源码的方式安装，使用如下方式卸载
-
-```shell
-cd ffmpeg
-sudo make uninstall // 删除make install安装的文件
-sudo make distclean // 删除configure和make产生的临时文件
-```
-
-用apt方式安装，使用如下方式卸载
-
-```shell
-sudo apt-get --purge remove ffmpeg
-suod apt-get --purge autoremove
-```
-
-# 二、音频基础
+# 音频基础
 
 ## 1. 音频处理流程
 
@@ -362,11 +183,11 @@ card 0: AudioPCI [Ensoniq AudioPCI], device 1: ES1371/2 [ES1371 DAC1]
 
 - 查看ffmpeg源码
 
-# 三、视频基础
+# 视频基础
 
 视频是由图像组成
 
-## 1. 图像的基本概念
+## 1. 基本概念
 
 ### 1.1 像素
 
@@ -403,6 +224,10 @@ H264 码流压缩率大约为250倍，H265 码流压缩率大约为500倍
 - 图像大小 == 显示窗口大小，刚好显示
 - 图像大小 < 显示窗口大小，可以进行拉伸或留白
 - 图像大小 > 显示窗口大小，可以进行缩小或截取
+
+### 1.7 QP
+
+量化参数，Quantizer Parameter，反映了空间细节的压缩情况。QP越小，量化越精细，图像质量越高。QP小，大部分细节会被保留；QP大，一部分细节会丢失，图像失真加强、质量下降
 
 ## 2. 颜色空间之RGB
 
@@ -441,7 +266,7 @@ YUV格式使用亮度和色度表示每个像素的颜色。其中，Y表示亮�
 
 ![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/6BAE064B9F9046CF8DA1EAE5E713152E/28996)
 
-#### 3.2.1 YUV  4 : 4 : 4
+**YUV  4 : 4 : 4**
 
 <img src="https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/7DE69CFD847B45888D60345DC6EF5D4A/28857" style="zoom: 40%;" />
 
@@ -453,7 +278,7 @@ YUV 4:4:4采样，三个分量采样率相同，每个像素点都包含完整�
 最后映射出的像素点为：[Y0 U0 V0] [Y1 U1 V1] [Y2 U2 V2] [Y3 U3 V3]
 ```
 
-#### 3.2.2 YUV  4 : 2 : 2
+**YUV  4 : 2 : 2**
 
 <img src="https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/5EDBDCD7EB454167A70B6591B28E3101/28859" style="zoom:40%;" />
 
@@ -468,7 +293,7 @@ YUV 4:2:2采样，水平方向按照2:1的比例采样，即Y和UV分量比例�
 其中，第1个、第2个像素点，共用了U0和V1分量；第3个、第4个像素点，共用了U2和V3分量。因此，每2个像素点占用4个字节，相比于RGB和YUV 4:4:4采样，节省了1/3的数据量
 ```
 
-#### 3.2.3 YUV  4 : 2 : 0
+**YUV  4 : 2 : 0**
 
 <img src="https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/CE88F7E63A6E42889E2954213FEF9E5E/28861" style="zoom:40%;" />
 
@@ -487,7 +312,7 @@ YUV 4:2:0采样，不是不采集V分量，而是每一行只采集一种色度�
 其中，每2个像素点占用3个字节，所以相比于RGB和YUV 4:4:4采样，节省了1/2的数据量，这是比较主流的采样格式
 ```
 
-### 3.4 YUV存储格式
+### 3.3 YUV存储格式
 
 存储格式，就是是采样的数据按照什么格式保存起来。
 
@@ -527,9 +352,7 @@ YUV 420SP：
 
 ![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/DD8ECFC1E9B742D2B702881DDC9933DC/28998)
 
-
-
-#### 3.4.1 YUYV
+**YUYV**
 
 YUYV格式是基于**YUV 4:2:2**采样格式，并按照**打包格式**存储的。先采集Y分量，在采集UV分量
 
@@ -543,7 +366,7 @@ Y0 和Y1 共用U0 和V0分量
 
 **！！！注意：这里的排序顺序，和上面介绍4:2:2格式的时候，说的不一致！！！！**
 
-#### 3.4.2 UYVY
+**UYVY**
 
 YUYV格式也是基于**YUV 4:2:2**采样格式，并按照**打包格式**存储的。但他的采集顺序和YUYV相反，先采集UV分量，再采集Y分量。
 
@@ -555,28 +378,28 @@ U0 Y0 V0 Y1 U2 Y2 V2 Y3
 
 **！！！注意：这里的排序顺序，和上面介绍4:2:2格式的时候，说的不一致！！！！**
 
-#### 3.4.3 YUV 422P
+**YUV 422P**
 
 YUV 422P，也叫做l422，是基于**YUV 4:2:2**采样格式，并按照**平面格式**存储的。先存储所有的Y分量，再存储所有的U分量，最后存储所有的V分量
 
-#### 3.4.4 YU12 和 YV12
+**YU12 和 YV12**
 
 YU12 和 YV12 都属于**YUV 420P** 格式。先存储Y分量，再存储U、V分量。
 
 区别在于，YU12先Y、再U、后V，而YV12先Y、再V、后U
 
-#### 3.4.5 NV12 和 NV21
+**NV12 和 NV21**
 
 NV12 和 NV21都属于**YUV 420SP**格式。先存储Y分量，再交替存储U、V分量。
 
 区别在于，NV12属于IOS中的模式，先存Y分量，再交替保存U、V分量；NV21属于安卓中的模式，先寸Y分量，再交替保存V、U分量
 
-### 3.3 YUV 和 RGB的关系
+### 3.4 YUV 和 RGB的关系
 
 - YUV用于图像的采集和编码
 - RGB用于图像的展示
 
-### 3.4 YUV转RGB
+### 3.5 YUV转RGB
 
 ```
 R = Y + 1.140 * V
@@ -584,11 +407,30 @@ G = Y - 0.394 * U - 0.581 * V
 B = Y + 2.032 * U
 ```
 
-## 4. H264
+## 4. 编码标准
 
-### 4.1 视频编码简介
+- ITU-T Standards VCEG：国际电信联盟下属的视频编码专家组
 
-视频编码，可以简单的理解为对视频内容进行压缩。
+- ISO MPEG Standards：国际标准化组织下属的移动图像专家组
+
+![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/CAF3DD358FDD4B0B8230BF5F48ECBF85/29165)
+
+- H264：国际标准化组织（ISO）和国际电信联盟（ITU-T）联合制定的，继MPEG4之后的新一代视频编码标准。具有很高的数据压缩比，在同等图像质量条件下，H264的压缩比是MPEG-2的2倍以上，是MPEG-4的1.5~2倍。
+- H265：是继H264之后，制定的新一代编码标准
+- JPEG：一种图像格式
+- JPEG2000：JPEG的升级版
+- MJPEG：一种视频压缩格式，其中每一帧图像都是用JPEG编码
+- SVAC
+
+MPEG是一个组织的名称，该组织编制了一系列MPEG-x的视频编码标准，和ITU-T共同制定H264视频编码标准
+
+[H.264、JPEG、JPEG2000、Motion JPEG、H.265、MPEG-4等图像编码格式_夜风的博客-CSDN博客_jpeg和jpeg2000](https://blog.csdn.net/u014470361/article/details/88716915)
+
+# 编码标准之H264
+
+## 1. 简介
+
+视频编码，可以简单的理解为对视频内容进行压缩
 
 
 
@@ -598,18 +440,6 @@ B = Y + 2.032 * U
 - 空间冗余：视频中的某一帧图像，内部的相邻像素存在相似性
 - 编码冗余：视频中不同数据出现的概率不同
 - 视觉冗余：人的视觉系统，对视频图像中的色度信息敏感度没有那么高，部分色度信息的丢失没有太大影响
-
-
-
-**视频编码的发展历史**
-
-- ITU-T Standards VCEG：国际电信联盟下属的视频编码专家组
-
-- ISO MPEG Standards：国际标准化组织下属的移动图像专家组
-
-![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/CAF3DD358FDD4B0B8230BF5F48ECBF85/29165)
-
-
 
 **视频编码的分类**
 
@@ -622,8 +452,6 @@ B = Y + 2.032 * U
   - 方法：针对不同物体的形状、运动和纹理进行编码
   - 代表：MPEG-4
 
-
-
 **视频编码的基本技术**
 
 - **预测编码**，是传输预测像素值与实际像素值之差，利用时间或空间相邻像素之间有较强的相关性，来进行压缩编码
@@ -634,11 +462,9 @@ B = Y + 2.032 * U
 
 - **熵编码**：利用信源的统计特性进行压缩编码。常用方法有，变长编码、算数编码
 
+## 2. 基本概念
 
-
-### 4.2 基本概念
-
-**帧、片、宏块**
+### 2.1 帧、片、宏块
 
 - 一个编码后的图像叫做一**帧**图像
 - 一帧由一**片**（slice）或多片组成
@@ -649,34 +475,32 @@ B = Y + 2.032 * U
 
 
 
-**I帧、P帧、B帧、IDR帧**
+### 2.2 帧类型
 
 - **I帧**，又叫做**内部编码帧**，是一种自带全部信息的独立帧，无需参考其他图像就可以独立进行编码，可以简单理解为一张静态画面。视频序列中的第一帧始终是I帧，因为它是关键帧
 - **P帧**，又叫做**帧间预测编码帧**，需要参考前面的I帧才能进行编码，表示的是当前帧和前一帧的差别，前一帧可能是I帧，也可能是P帧。解码时需要用之前的画面叠加本质定义的差别，生成最终画面。与I帧相比，P帧通常占用更少的数据位
 - **B帧**，又叫做**双向预测编码帧**，记录的是本帧和前后帧的差别。要解码B帧，不仅要获取前一帧的图像，还要获得后一帧的图像，通过前后帧的比较，解码出最终的画面。B帧压缩率高，但对解码器性能要求较高
 - **IDR帧**，又叫**强制刷新帧**，是为了编码和解码的方便，把GOP中的第一个I帧叫做IDR帧。IDR帧一定是I帧，但I帧不一定是IDR帧。在解码的过程中，当出现了IDR帧时，要更新SPS、PPS，防止前面的I帧错误，当时SPS、PPS参考I帧导致无法纠正。IDR帧之后的所有帧不能引用IDR帧之前的帧内容
 
-
+### 2.3 GOP
 
 **GOP**，Group Of Pictures，是一组连续的画面，由一个I帧和多个P、B帧组成，是编解码的基本单位。可以理解为关键帧间隔
 
+### 2.4 SPS
 
+### 2.5 PPS
 
-**SPS、PPS**
+### 2.6 profile
 
-解码相关的参数信息
+### 2.7 码流、码率
 
-
-
-### 4.3 H264编码格式
+## 3. 编码格式
 
 参考链接：
 
 [视频和视频帧：H264编码格式整理 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/71928833)
 
 [H264系列--码流组成和分层结构_yizhongliu的专栏-CSDN博客](https://blog.csdn.net/yizhongliu/article/details/114640635)
-
-
 
 **H264码流封装格式**
 
@@ -697,7 +521,13 @@ B = Y + 2.032 * U
 - 直接封装NAL Unit，无起始码
 - 每个NAL Unit之前，以几个字节表示NAL Unit的长度
 
-# 四、封装格式
+## 4. 码率控制 RC
+
+### 4.1 CBR
+
+### 4.2 VBR
+
+# 封装格式
 
 ## 1. 简介
 
@@ -733,37 +563,39 @@ mp4默认的视频编码格式是h264，音频编码格式是aac
 - [你真的懂 MP4 格式吗？MP4文件格式重点全解析！ - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/355803589)
 - [5分钟入门MP4文件格式 - 程序猿小卡 - 博客园 (cnblogs.com)](https://www.cnblogs.com/chyingp/p/mp4-file-format.html)
 
-### 2.2 ftyp
+### 2.2 格式
+
+**ftyp**
 
 File Type Box，一般位于文件的开始位置，用于描述文件的版本、协议信息等
 
 ![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/0EBA57E32C03495C86FF640EFB2F10B1/29194)
 
-### 2.3 moov
+**moov**
 
 Movie Box，包含文件的整体信息（创建时间、修改时间、总时长等），以及所有轨道（音频轨、视频轨）的相关信息
 
-#### 2.3.1 mvhd
+**mvhd**
 
 Movie Header Box，记录文件的整体信息，如创建时间、修改时间、总时长等
 
 ![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/71A6D49BB88947C68EA56F6344BBF7BD/29198)
 
-#### 2.3.2 trak
+**trak**
 
 Track Box，记录媒体流的相关信息
 
-##### 2.3.2.1 tkhd
+**tkhd**
 
 Track Header Box，关于媒体流的头部信息，Flag、创建时间、修改时间、track ID、视频流分辨率等
 
 ![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/A37029189DAA4290ADB43411A27B42BC/29200)
 
-##### 2.3.2.2 edts
+**edts**
 
 ![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/6BB78A91D6C948CDA5BC1643116FFC09/29202)
 
-##### 2.3.2.3 mdia
+**mdia**
 
 Media Box，包含track媒体信息的container box。子box包括
 
@@ -781,18 +613,16 @@ Media Box，包含track媒体信息的container box。子box包括
     - stsz：Sample Size Box，指定每个Sample的size
     - stco：Chunk Offset Box，指定每个Chunk在文件中的位置
 
-
-
 **相关概念**
 
 - Sample：是一个媒体流的基本单元，例如视频流的一个sample代表实际的nal数据
 - Chunk：是数据存储的基本单元，是一系列Sample数据的集合，一个chunk可以包含一个或多个sample
 
-#### 2.3.3 udta
+**udta**
 
 User Data Box，自定义数据
 
-### 2.4 mdat
+**mdat**
 
 Media Data Box，存放具体的多媒体数据
 
@@ -810,7 +640,9 @@ FLV格式分析工具，有FlvAnalyzer
 
 
 
-### 3.2 Header
+### 3.2 格式
+
+**Header**
 
 FLV格式的文件由FLV Header开头，Header 由以下字段组成
 
@@ -835,7 +667,7 @@ FLV格式的文件由FLV Header开头，Header 由以下字段组成
 - 第5个字节 0x05，对应 0000 0101，表示既有音频，又有视频
 - 后4个字节，0x 00 00 00 09，表示Header 长度为9
 
-### 3.3 Body
+**Body**
 
 FLV Body 由一些列 Tag 和 Tag size 组成，具体排列方式见下表
 
@@ -868,7 +700,7 @@ FLV Body 由一些列 Tag 和 Tag size 组成，具体排列方式见下表
 - 时间戳占24位，最大为 0xFFFFFF，16777215 ms，4.66小时。所以FLV格式采用这个时间戳，最大可存储4.66小时
 - 扩展时间戳占8位，最大为0xFF，使时间戳扩展到1193小时，49.7天
 
-#### 3.3.1 Audio Tag
+**Audio Tag**
 
 如果Tag Type为8，就表示该 Tag 为音频数据 Tag 
 
@@ -881,7 +713,7 @@ FLV Body 由一些列 Tag 和 Tag size 组成，具体排列方式见下表
 | 音频包类型（AAC Packet Type） | 8 bit（当音频位AAC时） | 0：AAC Sequence Header<br/> 1：AAC raw数据                   |
 | 音频数据                      |                        | 编码后的音频数据                                             |
 
-#### 3.3.2 Video Tag
+**Video Tag**
 
 如果Tag Type为9，就表示该 Tag 为视频数据 Tag 
 
@@ -893,7 +725,7 @@ FLV Body 由一些列 Tag 和 Tag size 组成，具体排列方式见下表
 | CTS（Compostion Time）          | 24 bit（当Codec ID为H264时） | 当编码使用B帧时，DTS和PTS不相等，CTS用与表示PTS和DTS之间的差值 |
 | 视频数据                        | 视频数据                     | 编码后的视频数据                                             |
 
-#### 3.3.3 ScriptsData Tag
+**ScriptsData Tag**
 
 如果Tag Type为18，就表示该 Tag 为ScriptsData Tag。Sctipts Data保存的是元数据信息，存储格式为AMF
 
@@ -902,7 +734,7 @@ FLV Body 由一些列 Tag 和 Tag size 组成，具体排列方式见下表
 | 类型（Type）              | 8 bit    | 0：Number<br/> 1：Boolean<br/> 2：String<br/> 3：Object<br/> 5：Null<br/> 6：Undefined<br/> 7：Reference<br/> 8：ECMA Array<br/> 9：Object end marker<br/> 10：Strict Array<br/> 11：Date<br/> 12：Long String |
 | 数据（Script Data Value） |          |                                                              |
 
-# 五、流媒体协议
+# 流媒体协议
 
 ## 1. RTMP
 
@@ -916,7 +748,174 @@ FLV Body 由一些列 Tag 和 Tag size 组成，具体排列方式见下表
 
 ## 3. RTP
 
-# 六、ffmpeg命令
+# ffmpeg基础
+
+## 1. ffmpeg介绍
+
+ffmpeg既是一款音视频编解码工具，也是一组音视频编解码开发组件。
+
+ffmpeg提供了多种媒体格式的封装和解封装，包括多种音视频编码、多种协议的流媒体、多种色彩格式转换、多种采样率转换、多种码率转换等。同时ffmpeg框架提供了多种插件模块，包含封装和解封装的插件、编码和解码的插件等。
+
+ffmpeg框架由5个基本模块组成。  
+
+- 封装模块：AVFormat
+- 编解码模块：AVCodec
+- 滤镜模块：AVFilter
+- 视频图像转换模块：swscale
+- 音频转换模块：swresample
+
+ffmpeg提供了如下3个工具。
+
+- 编解码工具：ffmpeg
+- 播放器：ffplay
+- 多媒体分析器：ffprobe
+
+## 2. 如何安装ffmpeg
+
+> 下面以ubuntu为例，说明如何安装ffmpeg
+
+### 2.1 源码编译ffmpeg
+
+**ubuntu发行版中已经包含了ffmpeg的安装包，但是可能版本比较老，对于一些新的编码格式和协议格式可能不支持，所以尽可能手动编译ffmpeg。**
+
+默认编译FFmpeg时，需要用到**yasm汇编器**对ffmpeg中的汇编部分进行编译。如果不需要用到汇编部分的代码，可以不安装yasm汇编器。如果没有安装该汇编器，执行默认配置的时候会报错。
+
+```shell
+michael@ubuntu:~/ffmpeg/package$ ./configure 
+nasm/yasm not found or too old. Use --disable-x86asm for a crippled build.
+
+If you think configure made a mistake, make sure you are using the latest
+version from Git.  If the latest version fails, report the problem to the
+ffmpeg-user@ffmpeg.org mailing list or IRC #ffmpeg on irc.freenode.net.
+Include the log file "ffbuild/config.log" produced by configure as this 
+will help solve the problem.
+```
+
+1. 编译安装yasm
+
+   ```shell
+   wget http://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz
+   ./configure 
+   sudo make 
+   sudo make install
+   ```
+
+2. 安装xorg-dev和SDL这两个库（缺少这两个库，无法编译出ffplay）
+
+   注意：旧版本ffplay依赖于SDL 1.2，而新版本依赖于SDL 2.0，需要安装对应的SDL才能编译生成ffplay
+
+   ```shell
+   sudo apt-get install xorg-dev
+   sudo apt-get install libsdl2-dev
+   ```
+
+3. 安装libfdk_aac、libopus、libx264
+
+   注：使用--enable-libfdk-aac编译选项时，需要先安装fdk_aac，否则会报 ERROR: libfdk_aac not found的错误，原因是fdk_aac已经从ffmpeg中独立出来了，所以需要先安装fdk_aac。同理，libopus和libx264也是一样
+
+   ```shell
+   sudo apt install libfdk-aac-dev
+   sudo apt install libopus-dev
+   sudo apt install libx264-dev
+   ```
+
+4. 编译安装ffmpeg（ffmpeg源码可以到官网上下载，git下载比较慢）
+
+   注：--enable-shared 指定编译动态库，使用静态库编码的时候会报undefined reference的错误
+
+   ffmpeg常用配置：[ffmpeg configure配置选项_一个人像一支队伍-CSDN博客](https://blog.csdn.net/momo0853/article/details/78043903)
+
+   ```shell
+   git clone git://source.ffmpeg.org/ffmpeg.git ffmpeg
+   sudo ./configure --enable-shared --prefix=/usr/local/ffmpeg --enable-gpl --enable-nonfree --enable-libfdk-aac --enable-libx264 --enable-libmp3lame --enable-libfreetype --enable-libfontconfig --enable-libfribidi --enable-libass --enable-libv4l2
+   sudo make -j16
+   sudo make install
+   ```
+
+5. 安装完成后，将ffmpeg的安装路径，添加到PATH环境变量
+
+   ```shell
+   sudo vi /etc/profile
+   添加 export PATH=$PATH:/usr/local/ffmpeg/bin
+   sudo source /etc/profile
+   ```
+
+
+
+
+**可能遇到的问题**
+
+1. 安装完成，执行ffmpeg，可能会遇到下面的报错
+
+   ```shell
+   /usr/local/ffmpeg/bin/ffmpeg: error while loading shared libraries: libavdevice.so.59: cannot open shared object file: No such file or directory
+   ```
+
+   解决方法：
+
+   ```shell
+   sudo vi /etc/ld.so.conf
+   在文件中添加路径：/usr/local/ffmpeg/lib   #该目录是ffmpeg的安装目录，根据个人不同安装目录修改。
+   sudo ldconfig
+   ```
+
+
+
+**ffplay与ffplay_g的区别**
+
+编译之后会发现，文件夹中同时出现了ffplay与ffplay_g（还有ffmpeg与ffmpeg_g）。这个多出来的g是做什么的呢？
+
+实际上，ffplay_g是含有调试信息的可执行文件，当我们想要调试时（比如新建一个工程对源码进行调试）会需要到它，而一般来说在实际使用的时候，我们会使用ffplay，它是ffplay_g经过strip之后得到的文件
+
+### 2.2 apt安装ffmeg
+
+1. 添加源
+
+   ```shell
+   sudo add-apt-repository ppa:djcj/hybrid
+   ```
+
+2. 更新源
+
+   ```shell
+   sudo apt-get update
+   ```
+
+3. 下载ffmpeg
+
+   ```shell
+   sudo apt-get install ffmpeg
+   ```
+
+4. 查看ffmpeg安装路径和基本信息
+
+   ```shell
+   michael@ubuntu:~/ffmpeg$ whereis ffmpeg
+   ffmpeg: /usr/bin/ffmpeg /usr/share/ffmpeg /usr/share/man/man1/ffmpeg.1.gz
+   michael@ubuntu:~$ ffmpeg
+   ffmpeg version 2.8.15-0ubuntu0.16.04.1 Copyright (c) 2000-2018 the FFmpeg developers
+     *****省略多余信息*****
+   Use -h to get full help or, even better, run 'man ffmpeg'
+   ```
+
+### 2.3 卸载ffmpeg
+
+用源码的方式安装，使用如下方式卸载
+
+```shell
+cd ffmpeg
+sudo make uninstall // 删除make install安装的文件
+sudo make distclean // 删除configure和make产生的临时文件
+```
+
+用apt方式安装，使用如下方式卸载
+
+```shell
+sudo apt-get --purge remove ffmpeg
+suod apt-get --purge autoremove
+```
+
+# ffmpeg命令
 
 ## 1. 命令分类
 
@@ -1401,7 +1400,7 @@ ffmpeg -i in.mov -vf crop=in_w -200:in_h-200 -c:v libx264 -c:a copy out.mp4
 - -c:v：指定视频编码器，libx264
 - -c:a：指定音频编码器，copy表示不做处理
 
-# 七、ffmpeg初级开发
+# ffmpeg初级开发
 
 ## 1. 基本概念
 
@@ -1567,7 +1566,7 @@ ADTS头包含音频的采样率，声道数，帧长度等信息，ADTS头长度
 - SPS / PPS：解码的视频参数，分辨率等信息
 - codec->extradata：获取SPS / PPS数据
 
-# 八、SDL
+# SDL
 
 ## 1. 简介
 
