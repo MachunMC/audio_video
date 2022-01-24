@@ -4,185 +4,6 @@
 
 - [GitHub - xhunmon/VABlog: 0基础学习音视频路线，以及重磅音视频资料下载。](https://github.com/xhunmon/VABlog)
 
-# 音频基础
-
-## 1. 音频处理流程
-
-采集到的音频是PCM数据，是转换后的数字信号
-
-声音的采集过程：
-
-```mermaid
-graph LR
-
-A[声音] --> |音频采集| B[PCM数据]
-B --> |音频编码| C[aac/mp3] 
-C --> |封装| D[mp4/flv]
-```
-
-声音的播放流程：
-
-```mermaid
-graph RL
-
-A[mp4/flv] --> |解封装| B[aac/mp3]
-B --> |解码| C[PCM数据] 
-C --> |播放| D[声音]
-```
-
-## 2. 声音的产生
-
-声音是由物体振动产生的，可以通过气体、液体、固体等介质传递。
-
-声音进入耳朵，使耳膜振动，大脑对其进行识别。
-
-人的听觉范围是**20~2wHz**，这个范围内的声音称为**可听声波**；小于20Hz的称为**次声波**，超过2wHz的称为**超声波**。Hz是频率的单位，指1s内振动的次数。
-
-## 3. 声音三要素
-
-- 音量：振动的幅度
-- 音调：音频的快慢
-- 音色：由谐波产生
-
-## 4. 模数转换
-
-自然界中采集到的声音是模拟信号，对声音进行量化采样，将模拟信号转换为数字信号。
-
-## 5. PCM和WAV
-
-PCM是音频原始数据，纯音频数据。WAV是微软制定的一种音频文件格式，是在PCM数据的基础上，增加了一个头部信息。
-
-WAV文件格式如下，头部信息中，比较重要的信息有音频格式、采样率、采样大小、声道数
-
-![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/78F4551AA2274AC7AD6468AAB2D733BC/28495)
-
-**音频三要素**
-
-- 采样大小（位深）：一个采样数据用多少bit存储，位深越大，表示音频范围越大。常用的是16bit
-- 采样率：常用的有8K、16K、32K、44.1K、48K，采样率越大，数字信号就越接近于模拟信号，数据量也越大
-- 声道数：单声道、双声道、多声道
-
-```
-码率 = 采样率 * 采样大小 * 声道数
-```
-
-例如，采样率44.1KHz，采样大小16bit，双声道的PCM编码的WAV文件，它的码率是多少？
-
-码率 = 44.1K * 16 * 2 = 1411.2 Kb/s
-
-## 6. 音频采集
-
-对于音频采集，不同的平台，如android、ios、windows和mac，有不同的API可供调用。FFmpeg对于这些平台都做了封装，不同平台依赖的库可能不同
-
-```shell
-ffmpeg -f alsa -i hw:0 out.wav  // 用ffmpeg采集音频数据。-f指定用到的库，alsa是采集音频的库
-ffplay out.wav				    // ffplay播放保存的音频文件
-```
-
-## 7. 音频压缩技术
-
-音频压缩主要考虑两方面，**压缩后的数据量**和**压缩速度**，直播需要综合考虑这两个方面
-
-音频压缩技术分为有损压缩和无损压缩。无损压缩还原后，和原数据完全相同；有损压缩还原后，和原数据略有不同
-
-### 7.1 有损压缩
-
-低于20Hz和高于20000Hz的数据，人耳感知不到，可以去除。
-
-遮蔽效应，时间遮蔽和频域遮蔽，声音会被掩盖，也可以去除。
-
-### 7.2 无损压缩
-
-熵编码
-
-- 哈夫曼编码
-- 算术编码
-- 香农编码
-
-## 8. 音频编码格式
-
-- OPUS：延迟小、压缩率高，是比较新的音频编解码器，webrtc中默认使用OPUS
-
-- AAC：在直播中应用比较广泛，应用最广泛，音质保真性好。目的是取代MP3格式，压缩率更好，保真性好
-
-- Ogg：收费
-
-- Speex：支持回音消除
-
-- G.711：用于固话，窄带音频，声音损耗严重
-
-  评测结果：OPUS > AAC > Ogg
-
-
-### 8.1 AAC
-
-**常用的规格：**
-
-- AAC LC：最基础的版本，低复杂度，码率在128Kb/s，音质好
-- HE-AAC：在AAC LC基础上，增加了SBR技术，码率在64Kb/s左右。核心思想是按频谱分类保存，低频保存主要成分，高频单独放大编码保存音质  
-- HE-AACv2：在HE-AAC基础上，增加了PS技术，码率在48Kb/s左右。核心思想是双声道中的声音存在某种相似性，只需存储一个声道的全部信息，然后用很少的字节保存另一个声道和它不同的地方
-
-**AAC格式**
-
-- ADIF：头部保存的音频的重要信息，只能从头开始编码，不能从音频数据的中间开始。常用在磁盘文件中
-- ADTS：每一帧都有一个同步字，可以在音频的任何位置开始解码 
-
-从mp4文件中提取音频文件，使用AAC编码。具体参数说明，见官方文档：https://ffmpeg.org/ffmpeg-codecs.html#libfdk_005faac
-
-```shell
-ffmpeg -i xxx.mp4 -vn -c:a libfdk_aac -ar 44100 -channels 2 -profile:a aac_he_v2 v2.aac
-// 1. -i：表示输入文件
-// 2. -vn：video no，表示过滤视频
-// 3. -c:a：-c表示code编码，a表示audio音频，表示使用fdk_aac编码器
-// 4. -ar：表示音频采样率
-// 5. -channels：表示声道数，双声道
-// 6. -profile:a：表示设置音频参数，aac_he_v2，以AAC HE V2规格来编码
-```
-
-### 8.2 opus
-
-### 8.3 MP3
-
-## 9. 音频重采样
-
-音频三元组
-
-- 采样率
-- 采样大小
-- 通道数
-
-### 9.1 什么是音频重采样
-
-指的是将音频三元组的值转换成另一组值，如将44100 / 16 / 2 转换成48000 / 16 / 2
-
-### 9.2 为什么要进行重采样？
-
-- 从设备采集的数据和编码器要求的数据不一致
-- 扬声器要求的音频数据和要播放的数据不一致
-- 便于计算
-
-### 9.3 如何判断是否要进行重采样
-
-- 了解音频设备的参数
-
-```shell
-machun@ubuntu:~/ffmpeg_learn$ lspci |grep -i audio  	// 查看声卡型号
-02:02.0 Multimedia audio controller: Ensoniq ES1371/ES1373 / Creative Labs CT2518 (rev 02)
-machun@ubuntu:~/ffmpeg_learn$ cat /proc/asound/cards    // 查看声卡信息
- 0 [AudioPCI       ]: ENS1371 - Ensoniq AudioPCI
-                      Ensoniq AudioPCI ENS1371 at 0x2040, irq 16
-machun@ubuntu:~/ffmpeg_learn$ aplay -l					// 查看声卡详细信息
-**** List of PLAYBACK Hardware Devices ****
-card 0: AudioPCI [Ensoniq AudioPCI], device 0: ES1371/1 [ES1371 DAC2/ADC]
-  Subdevices: 0/1
-  Subdevice #0: subdevice #0
-card 0: AudioPCI [Ensoniq AudioPCI], device 1: ES1371/2 [ES1371 DAC1]
-  Subdevices: 1/1
-  Subdevice #0: subdevice #0
-```
-
-- 查看ffmpeg源码
-
 # 视频基础
 
 视频是由图像组成
@@ -209,15 +30,21 @@ card 0: AudioPCI [Ensoniq AudioPCI], device 1: ES1371/2 [ES1371 DAC1]
 
 未编码的RGB码流大小 = 分辨率（宽 * 高） * 3（Byte）* 帧率
 
-### 1.4 压缩率
+### 1.4 码率
+
+视频码率，就是数据传输时，单位时间内传输的数据位数，单位一般为kbps。
+
+几乎所有的编码格式重视的，都是如何用最低的码率达到最少的失真，围绕这个核心衍生出CBR（固定码率）和VBR（可变码率）两种不同的码率控制方式
+
+### 1.5 压缩率
 
 H264 码流压缩率大约为250倍，H265 码流压缩率大约为500倍
 
-### 1.5 宽高比
+### 1.6 宽高比
 
 常见的宽高比有16:9 和 4:3。目前几乎都是16:9，如果宽高比不是16:9 或 4:3，需要将其转换为标准的16:9 或 4:3
 
-### 1.6 图像的显示
+### 1.7 图像的显示
 
 图像的显示，需要考虑图像大小和显示窗口大小的关系。
 
@@ -225,7 +52,7 @@ H264 码流压缩率大约为250倍，H265 码流压缩率大约为500倍
 - 图像大小 < 显示窗口大小，可以进行拉伸或留白
 - 图像大小 > 显示窗口大小，可以进行缩小或截取
 
-### 1.7 QP
+### 1.8 QP
 
 量化参数，Quantizer Parameter，反映了空间细节的压缩情况。QP越小，量化越精细，图像质量越高。QP小，大部分细节会被保留；QP大，一部分细节会丢失，图像失真加强、质量下降
 
@@ -407,7 +234,7 @@ G = Y - 0.394 * U - 0.581 * V
 B = Y + 2.032 * U
 ```
 
-## 4. 编码标准
+## 4. 常见的编码标准
 
 - ITU-T Standards VCEG：国际电信联盟下属的视频编码专家组
 
@@ -426,7 +253,7 @@ MPEG是一个组织的名称，该组织编制了一系列MPEG-x的视频编码�
 
 [H.264、JPEG、JPEG2000、Motion JPEG、H.265、MPEG-4等图像编码格式_夜风的博客-CSDN博客_jpeg和jpeg2000](https://blog.csdn.net/u014470361/article/details/88716915)
 
-# 编码标准之H264
+# 视频编码之H264
 
 ## 1. 简介
 
@@ -492,8 +319,6 @@ MPEG是一个组织的名称，该组织编制了一系列MPEG-x的视频编码�
 
 ### 2.6 profile
 
-### 2.7 码流、码率
-
 ## 3. 编码格式
 
 参考链接：
@@ -521,11 +346,15 @@ MPEG是一个组织的名称，该组织编制了一系列MPEG-x的视频编码�
 - 直接封装NAL Unit，无起始码
 - 每个NAL Unit之前，以几个字节表示NAL Unit的长度
 
-## 4. 码率控制 RC
+## 4. 码率控制
 
-### 4.1 CBR
+### 4.1 固定码率
 
-### 4.2 VBR
+CBR
+
+### 4.2 可变码率
+
+ VBR
 
 # 封装格式
 
@@ -736,7 +565,11 @@ FLV Body 由一些列 Tag 和 Tag size 组成，具体排列方式见下表
 
 # 流媒体协议
 
-## 1. RTMP
+## 1. RTP 
+
+## 2. RTSP
+
+## 3. RTMP
 
 [直播技术的背后--RTMP协议 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/157429042)
 
@@ -744,9 +577,198 @@ FLV Body 由一些列 Tag 和 Tag size 组成，具体排列方式见下表
 
 [Enscript Output (adobe.com)](https://wwwimages2.adobe.com/content/dam/acom/en/devnet/rtmp/pdf/rtmp_specification_1.0.pdf)
 
-## 2. RTSP
+# 音频基础
 
-## 3. RTP
+## 1. 音频处理流程
+
+采集到的音频是PCM数据，是转换后的数字信号
+
+声音的采集过程：
+
+```mermaid
+graph LR
+
+A[声音] --> |音频采集| B[PCM数据]
+B --> |音频编码| C[aac/mp3] 
+C --> |封装| D[mp4/flv]
+```
+
+声音的播放流程：
+
+```mermaid
+graph RL
+
+A[mp4/flv] --> |解封装| B[aac/mp3]
+B --> |解码| C[PCM数据] 
+C --> |播放| D[声音]
+```
+
+## 2. 声音的产生
+
+声音是由物体振动产生的，可以通过气体、液体、固体等介质传递。
+
+声音进入耳朵，使耳膜振动，大脑对其进行识别。
+
+人的听觉范围是**20~2wHz**，这个范围内的声音称为**可听声波**；小于20Hz的称为**次声波**，超过2wHz的称为**超声波**。Hz是频率的单位，指1s内振动的次数。
+
+## 3. 声音三要素
+
+- 音量：振动的幅度
+- 音调：音频的快慢
+- 音色：由谐波产生
+
+## 4. 模数转换
+
+自然界中采集到的声音是模拟信号，对声音进行量化采样，将模拟信号转换为数字信号。
+
+## 5. PCM和WAV
+
+PCM是音频原始数据，纯音频数据。WAV是微软制定的一种音频文件格式，是在PCM数据的基础上，增加了一个头部信息。
+
+WAV文件格式如下，头部信息中，比较重要的信息有音频格式、采样率、采样大小、声道数
+
+![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/78F4551AA2274AC7AD6468AAB2D733BC/28495)
+
+## 6. 音频三要素
+
+- 采样率：常用的有8K、16K、32K、44.1K、48K，采样率越大，数字信号就越接近于模拟信号，数据量也越大
+- 采样大小（位深）：一个采样数据用多少bit存储，位深越大，表示音频范围越大。常用的是16bit
+- 声道数：单声道、双声道、多声道
+
+```
+码率 = 采样率 * 采样大小 * 声道数
+```
+
+例如，采样率44.1KHz，采样大小16bit，双声道的PCM编码的WAV文件，它的码率是多少？
+
+码率 = 44.1K * 16 * 2 = 1411.2 Kb/s
+
+## 7. 音频采集
+
+对于音频采集，不同的平台，如android、ios、windows和mac，有不同的API可供调用。FFmpeg对于这些平台都做了封装，不同平台依赖的库可能不同
+
+```shell
+ffmpeg -f alsa -i hw:0 out.wav  // 用ffmpeg采集音频数据。-f指定用到的库，alsa是采集音频的库
+ffplay out.wav				    // ffplay播放保存的音频文件
+```
+
+## 8. 音频算法
+
+### 8.1 AEC 
+
+回音抵消（Acoustic Echo Cancellation）
+
+### 8.2 AGC
+
+自动增益补偿（Automatic Gain Control），可以自动调节麦克风的接收音量，避免发言者与麦克风的距离改变，而造成声音忽大忽小的问题
+
+### 8.3 ANS
+
+背景噪音抑制（Automatic Noise Suppression），可以探测出背景声中固定频率的杂音，并消除背景噪音，例如风扇声
+
+## 9. 音频压缩技术
+
+音频压缩主要考虑两方面，**压缩后的数据量**和**压缩速度**，直播需要综合考虑这两个方面
+
+音频压缩技术分为有损压缩和无损压缩。无损压缩还原后，和原数据完全相同；有损压缩还原后，和原数据略有不同
+
+### 9.1 有损压缩
+
+低于20Hz和高于20000Hz的数据，人耳感知不到，可以去除。
+
+遮蔽效应，时间遮蔽和频域遮蔽，声音会被掩盖，也可以去除。
+
+### 9.2 无损压缩
+
+熵编码
+
+- 哈夫曼编码
+- 算术编码
+- 香农编码
+
+## 10. 音频编码格式
+
+- OPUS：延迟小、压缩率高，是比较新的音频编解码器，webrtc中默认使用OPUS
+
+- AAC：在直播中应用比较广泛，应用最广泛，音质保真性好。目的是取代MP3格式，压缩率更好，保真性好
+
+- Ogg：收费
+
+- Speex：支持回音消除
+
+- G.711：用于固话，窄带音频，声音损耗严重
+
+  评测结果：OPUS > AAC > Ogg
+
+
+### 10.1 AAC
+
+**常用的规格：**
+
+- AAC LC：最基础的版本，低复杂度，码率在128Kb/s，音质好
+- HE-AAC：在AAC LC基础上，增加了SBR技术，码率在64Kb/s左右。核心思想是按频谱分类保存，低频保存主要成分，高频单独放大编码保存音质  
+- HE-AACv2：在HE-AAC基础上，增加了PS技术，码率在48Kb/s左右。核心思想是双声道中的声音存在某种相似性，只需存储一个声道的全部信息，然后用很少的字节保存另一个声道和它不同的地方
+
+**AAC格式**
+
+- ADIF：头部保存的音频的重要信息，只能从头开始编码，不能从音频数据的中间开始。常用在磁盘文件中
+- ADTS：每一帧都有一个同步字，可以在音频的任何位置开始解码 
+
+从mp4文件中提取音频文件，使用AAC编码。具体参数说明，见官方文档：https://ffmpeg.org/ffmpeg-codecs.html#libfdk_005faac
+
+```shell
+ffmpeg -i xxx.mp4 -vn -c:a libfdk_aac -ar 44100 -channels 2 -profile:a aac_he_v2 v2.aac
+// 1. -i：表示输入文件
+// 2. -vn：video no，表示过滤视频
+// 3. -c:a：-c表示code编码，a表示audio音频，表示使用fdk_aac编码器
+// 4. -ar：表示音频采样率
+// 5. -channels：表示声道数，双声道
+// 6. -profile:a：表示设置音频参数，aac_he_v2，以AAC HE V2规格来编码
+```
+
+### 10.2 opus
+
+### 10.3 MP3
+
+## 11. 音频重采样
+
+音频三元组
+
+- 采样率
+- 采样大小
+- 通道数
+
+### 11.1 什么是音频重采样
+
+指的是将音频三元组的值转换成另一组值，如将44100 / 16 / 2 转换成48000 / 16 / 2
+
+### 11.2 为什么要进行重采样？
+
+- 从设备采集的数据和编码器要求的数据不一致
+- 扬声器要求的音频数据和要播放的数据不一致
+- 便于计算
+
+### 11.3 如何判断是否要进行重采样
+
+- 了解音频设备的参数
+
+```shell
+machun@ubuntu:~/ffmpeg_learn$ lspci |grep -i audio  	// 查看声卡型号
+02:02.0 Multimedia audio controller: Ensoniq ES1371/ES1373 / Creative Labs CT2518 (rev 02)
+machun@ubuntu:~/ffmpeg_learn$ cat /proc/asound/cards    // 查看声卡信息
+ 0 [AudioPCI       ]: ENS1371 - Ensoniq AudioPCI
+                      Ensoniq AudioPCI ENS1371 at 0x2040, irq 16
+machun@ubuntu:~/ffmpeg_learn$ aplay -l					// 查看声卡详细信息
+**** List of PLAYBACK Hardware Devices ****
+card 0: AudioPCI [Ensoniq AudioPCI], device 0: ES1371/1 [ES1371 DAC2/ADC]
+  Subdevices: 0/1
+  Subdevice #0: subdevice #0
+card 0: AudioPCI [Ensoniq AudioPCI], device 1: ES1371/2 [ES1371 DAC1]
+  Subdevices: 1/1
+  Subdevice #0: subdevice #0
+```
+
+- 查看ffmpeg源码
 
 # ffmpeg基础
 
@@ -1566,23 +1588,5 @@ ADTS头包含音频的采样率，声道数，帧长度等信息，ADTS头长度
 - SPS / PPS：解码的视频参数，分辨率等信息
 - codec->extradata：获取SPS / PPS数据
 
-# SDL
 
-## 1. 简介
-
-SDL是Simple Direct Media Layer的缩写，是一个跨平台的多媒体库。提供了针对音频、视频、鼠标、键盘等的访问接口，在播放软件、模拟器和游戏领域获得了广泛的应用。
-
-SDL是用C编写的，但可以原生的配合C++使用，并且拥有一些其他语言的绑定
-
-[目录 · SDL中文教程 (tjumyk.github.io)](http://tjumyk.github.io/sdl-tutorial-cn/contents.html)
-
-## 2. 编译
-
-```shell
-git clone https://github.com/libsdl-org/SDL.git
-cd SDL
-sudo ./configure --prefix=/usr/local/sdl
-sudo make -j4 
-sudo make install
-```
 
