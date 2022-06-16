@@ -264,6 +264,8 @@ MPEG是一个组织的名称，该组织编制了一系列MPEG-x的视频编码�
 
 # 视频编码之H264
 
+[【H.264/AVC视频编解码技术详解】殷汶杰在线视频教程 - CSDN学院](https://edu.csdn.net/course/detail/2777)
+
 ## 1. 简介
 
 视频编码，可以简单的理解为对视频内容进行压缩
@@ -298,18 +300,48 @@ MPEG是一个组织的名称，该组织编制了一系列MPEG-x的视频编码�
 
 - **熵编码**：利用信源的统计特性进行压缩编码。常用方法有，变长编码、算数编码
 
-## 2. 基本概念
+## 2. H264帧格式
+
+参考链接：
+
+[H264帧格式解析_zhaoyun_zzz的专栏-CSDN博客_h264格式](https://blog.csdn.net/zhaoyun_zzz/article/details/87302600)
+
+[H.264格式分析_草上爬的博客-CSDN博客_h264文件结构](https://blog.csdn.net/caoshangpa/article/details/53019793?spm=1001.2101.3001.6661.1&utm_medium=distribute.pc_relevant_t0.none-task-blog-2~default~CTRLIST~Rate-1.pc_relevant_default&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-2~default~CTRLIST~Rate-1.pc_relevant_default&utm_relevant_index=1)
+
+[ ITU-T H.264/MPEG-4 AVC编解码原理介绍_chinadragon76的专栏-CSDN博客](https://blog.csdn.net/chinadragon76/article/details/22408727)
+
+[视频和视频帧：H264编码格式整理 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/71928833)
+
+[H264系列--码流组成和分层结构_yizhongliu的专栏-CSDN博客](https://blog.csdn.net/yizhongliu/article/details/114640635)
 
 ### 2.1 帧、片、宏块
 
-- 一个编码后的图像叫做一**帧**图像
-- 一帧由一**片**（slice）或多片组成
-- 一片由一个或多个**宏块**（MicroBlock）组成，宏块是H264编码的基本单元
-- 一个宏块由16*16的yuv像素点组成，每个宏块还可以划分为多个子块
-
 <img src="https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/575AAFEB73B14A3CAFB382B255BE92E5/29182"  />
 
+三者关系如上图所示
 
+- 一段H264码流由多帧图像组成
+- 一帧图像由一**片**（**slice**）或多片组成
+- 一片由一个或多个**宏块**（**Micro Block, MB**）组成，宏块是H264编码的基本单元
+- 一个宏块由16*16个**像素点**组成。每个宏块还可以划分为多个子块，宏块可以分为I宏块、P宏块、B宏块
+
+### 2.2 帧格式
+
+![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/192567ACC06B4534AEFE96415B1A1B42/32062)
+
+
+
+
+
+
+
+<img src="https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/CC865D07AE404CE4B70BBA8FC61E3184/29172" style="zoom:80%;" />
+
+
+
+
+
+## 3. 基本概念
 
 ### 2.2 帧类型
 
@@ -320,40 +352,32 @@ MPEG是一个组织的名称，该组织编制了一系列MPEG-x的视频编码�
 
 ### 2.3 GOP
 
-**GOP**，Group Of Pictures，是一组连续的画面，由一个I帧和多个P、B帧组成，是编解码的基本单位。可以理解为关键帧间隔
+**GOP**，Group Of Pictures，在视频编码序列中，指的是两个I帧之间的距离，又叫关键帧间隔
 
 ### 2.4 SPS
 
+序列参数集，Sequence Parameters set。保存一组视频编码序列的全局参数
+
 ### 2.5 PPS
 
-### 2.6 profile
+图像参数集，Picture parameters set。保存一组视频编码序列中，每一帧编码后的数据所依赖的参数
 
-## 3. 编码格式
+### 2.6 SEI
 
-参考链接：
+**SEI** 没有图像数据信息，只是对图像数据信息或视频流的补充，有些内容可能对解码有帮助	
 
-[视频和视频帧：H264编码格式整理 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/71928833)
+### 2.7 profile
 
-[H264系列--码流组成和分层结构_yizhongliu的专栏-CSDN博客](https://blog.csdn.net/yizhongliu/article/details/114640635)
+H264支持4个profile（档次）
 
-**H264码流封装格式**
+- **BP（Baseline Profile）**：支持I帧、P帧，支持Progressive（逐行扫描）和CAVLC（熵编码，基于上下文的自适应可变长编码）。多应用于“视频会话“，如可视电话、会议电视、远程教学、视频监控等实时通信领域
+- **EP（Extended Profile）**：支持I帧、P帧、B帧、SP帧、SI帧，支持Progressive 和 CAVLC。多应用于流媒体领域，如视频点播、基于网络的视频监控等
+- **MP（Main Profile）**：支持I帧、P帧、B帧，支持Progressive 和 Interlaced（隔行扫描），支持CAVLC和CABAC（熵编码，基于上下文的自适应二进制编码）。多应用于数字电视广播、数字视频存储等领域
+- **HP（High Profile）**：在Main Profile基础上，新增8*8帧内预测，Custom Quant，Lossless Video Coding，更多YUV格式（4:2:2，4:4:4），像素精度提高到10位或14位。多应用于对高分辨率和高清晰度有特别要求的领域
 
-**字节流格式**
+### 2.8 level
 
-- 大部分编码器的默认输出格式
-- 每个NAL Unit以规定格式的起始码分割
-- 起始码（start code）：0x 00 00 00 01或 0x 00 00 01
-
-
-
-![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/CC865D07AE404CE4B70BBA8FC61E3184/29172)
-
-
-
-**RTP数据包格式**
-
-- 直接封装NAL Unit，无起始码
-- 每个NAL Unit之前，以几个字节表示NAL Unit的长度
+level（级别）是用来约束分辨率、帧率和码率的
 
 ## 4. 码率控制
 
@@ -1184,11 +1208,21 @@ ffmpeg -i in.mp4 -vn -acodec copy out.aac
 - 如果输入文件中没有音频，要提取音频就会报错；同理，没有视频，要提取视频也会报错
 - 注意提取的视频文件后缀名，要和ffprobe查看的视频格式相同，否则播放有问题
 
-## 6. 提取原始数据
+## 6. 从mp4文件提取h264数据
+
+```shell
+ffmpeg -i wanfeng.mp4 -codec copy -bsf: h264_mp4toannexb -f h264 wanfeng.h264
+
+- codec copy：从MP4封装中进行拷贝
+- bsf: h264_mp4toannexb：从MP4拷贝到annexB封装
+- f h264：采用h.264格式
+```
+
+## 7. 提取原始数据
 
 视频原始数据是 YUV 数据，音频原始数据是 PCM 数据
 
-### 6.1 提取YUV数据
+### 7.1 提取YUV数据
 
 ```shell
 ffmpeg -i short_mv.mp4 -an -c:v rawvideo -pix_fmt yuv420p out.yuv
@@ -1201,11 +1235,11 @@ ffmpeg -i short_mv.mp4 -an -c:v rawvideo -pix_fmt yuv420p out.yuv
 
 ![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/B0DDF2BBB26840FE9BD57671461A8AA6/28897)
 
-UV数据时，需要指定分辨率，否则播放不出来。分辨率可以在提取时的输出信息中查看
+播放YUV数据时，需要指定分辨率，否则播放不出来。分辨率可以在提取时的输出信息中查看
 
 ![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/E063CFCD4F874E8BB664AAB3A2771467/28893)
 
-### 6.2 提取PCM数据
+### 7.2 提取PCM数据
 
 ```shell
 ffmpeg -i short_mv.mp4 -vn -ar 44100 -ac 2 -f s16le out.pcm
@@ -1221,9 +1255,9 @@ ffmpeg -i short_mv.mp4 -vn -ar 44100 -ac 2 -f s16le out.pcm
 
 ![](https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/8037AADD3C7140628A6658407438C764/28895)
 
-## 7. 裁剪与拼接
+## 8. 裁剪与拼接
 
-### 7.1 音视频裁剪
+### 8.1 音视频裁剪
 
 ```shell
 ffmpeg -i input.mp4 -ss 00:01:20 -t 20 out.mp4
@@ -1234,7 +1268,7 @@ ffmpeg -i input.mp4 -ss 00:01:20 -t 20 out.mp4
 
 **需要注意裁剪的开始时间，是否在视频的有效时间内**
 
-### 7.2 音视频拼接
+### 8.2 音视频拼接
 
 ```shell
 ffmpeg -f concat -i inputs.txt out.mp4
@@ -1252,9 +1286,9 @@ file '2.mp4'
 machun@ubuntu:~/ffmpeg_learn$ ffmpeg -f concat -i inputs.txt 3.mp4
 ```
 
-## 8. 图片和视频互转
+## 9. 图片和视频互转
 
-### 8.1 视频转图片
+### 9.1 视频转图片
 
 ```shell
 ffmpeg -i input.flv -r 1 -f image2 image-%3d.jpeg
@@ -1272,7 +1306,7 @@ ffmpeg -i input.flv -r 1 -f image2 image-%3d.jpeg
 
 <img src="https://note.youdao.com/yws/public/resource/a66685a4842f56c1ad2c2aaf50a39424/xmlnote/B9431A99415A4CF0A8F688307DEEAFFB/28901" style="zoom:80%;" />
 
-### 8.2 图片转视频
+### 9.2 图片转视频
 
 ```shell
 ffmpeg -i image-%3d.jpeg out.mp4
@@ -1294,9 +1328,9 @@ ffmpeg -r 1 -i image-%02d.jpeg -vf fps=1 out.mp4
 
 图片转视频，还可以设置分辨率信息
 
-## 9. 推拉流
+## 10. 推拉流
 
-### 9.1 Ubuntu Nginx搭建RTMP服务器
+### 10.1 Ubuntu Nginx搭建RTMP服务器
 
 参考链接：[Nginx搭建rtmp流媒体服务器(Ubuntu 16.04) - 简书 (jianshu.com)](https://www.jianshu.com/p/16741e363a77)
 
@@ -1368,7 +1402,7 @@ ffplay rtmp://localhost/vod/wanfengqingqishi.mp4  // 注意这里要加vod，对
 
 - 直播，ffmpeg往RTMP服务器推流，然后可以用ffplay直接播放
 
-### 9.2 推流
+### 10.2 推流
 
 ```shell
 ffmpeg -re -i input.mp4 -c copy -f flv rtmp://server/live/streamName
@@ -1384,7 +1418,7 @@ ffmpeg -re -i input.mp4 -c copy -f flv rtmp://server/live/streamName
 ffmpeg -re -i wanfeng.mp4 -c copy -f flv rtmp://localhost/live_1/wangfeng
 ```
 
-### 9.3 拉流
+### 10.3 拉流
 
 可以直接用ffplay播放
 
@@ -1400,19 +1434,19 @@ ffmpeg -i rtmp://server/live/streamName -c copy dump.flv
 
 - -c copy：表示不重新编码，直接复制
 
-## 10. 滤镜
+## 11. 滤镜
 
-### 10.1给视频添加水印
+### 11.1给视频添加水印
 
 添加文字、图片水印
 
-### 10.2 制作视频画中画
+### 11.2 制作视频画中画
 
-### 10.3 制作视频多宫格
+### 11.3 制作视频多宫格
 
-### 10.4 给视频添加字幕
+### 11.4 给视频添加字幕
 
-### 10.5 音视频倍速播放
+### 11.5 音视频倍速播放
 
 ```mermaid
 graph LR
@@ -1599,3 +1633,8 @@ ADTS头包含音频的采样率，声道数，帧长度等信息，ADTS头长度
 
 
 
+# 常见问题
+
+## 1. 花屏
+
+[花屏是个什么鬼_音视频开发的技术博客_51CTO博客](https://blog.51cto.com/u_7335580/2090120)
